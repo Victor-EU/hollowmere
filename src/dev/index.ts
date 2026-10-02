@@ -21,6 +21,10 @@ export interface Dev extends DevTools {
   /** Re-scan everything and return every problem found so far. */
   report(): DevReport;
   readonly frame: FrameStats;
+  /** Put the free camera at `from` looking at `to` (tools/shots.ts --views); null leaves it. */
+  view(from: [number, number, number] | null, to?: [number, number, number]): void;
+  /** The free camera's pose, for adding a view. */
+  pose(): ReturnType<FreeCam['pose']>;
 }
 
 function read<T>(storage: () => Storage, key: string, fallback: T): T {
@@ -219,6 +223,14 @@ export function installDev(host: DevHost): Dev {
       }
     },
     end: () => stats.end(),
+    view(from, to) {
+      if (!from) return setFreecam(false);
+      const [dx, dy, dz] = [0, 1, 2].map((k) => (to ?? from)[k] - from[k]);
+      const len = Math.hypot(dx, dy, dz) || 1;
+      if (!freecam.active) setFreecam(true);
+      freecam.setPose({ pos: from, yaw: Math.atan2(-dx, -dz), pitch: Math.asin(dy / len) });
+    },
+    pose: () => freecam.pose(),
     report() {
       watch.scan(scene, true);
       const s = editor.samples;

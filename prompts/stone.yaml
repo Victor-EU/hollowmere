@@ -1,0 +1,41 @@
+# Castle stone: curtain walls, the viaduct, the gate, buttresses. Tileable.
+id: stone
+kind: material
+# Metres covered by one repeat of the texture; the kit's UVs are in metres.
+tile: 16
+seamless: true
+priority: 1
+roughness: 0.92
+
+generate:
+  size: 1024x1024
+  prompt: >-
+    Weathered medieval castle ashlar wall: coursed blocks of neutral warm grey limestone, 40 to
+    80 cm high and up to 2 m long, rounded and chipped arrises, recessed lime mortar, dark water
+    streaks running down, a little grey-green lichen. About 16 m of wall shown.
+
+# 'synth' uses the procedural stand-in below. To ship a generated image instead, set this to the
+# candidate's id from assets/raw/stone/ (see `npm run generate`).
+source: synth
+synth:
+  type: masonry
+  seed: 77
+  course: [0.42, 0.78]
+  length: [0.6, 1.8]
+  joint: 0.026
+  bevel: 0.03
+  warp: 0.03
+  relief: 0.022
+  rough: 0.012
+  chip: 0.7
+  colors: ['#55524c', '#4d4a45', '#5b5750', '#4a4844', '#57534b', '#504d49']
+  jitter: 0.18
+  mortar: '#5a554c'
+  grime: '#1f2120'
+  stains: 0.5
+  lichen: { color: '#6b6e58', amount: 0.3 }
+
+maps:
+  albedo: { encode: etc1s, tiers: { desktop: 2048, mobile: 1024 } }
+  # Relief for generated images comes from luminance: metres per unit of local contrast.
+  normal: { encode: uastc, tiers: { desktop: 1024, mobile: 512 }, fromLuminance: 0.05 }

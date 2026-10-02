@@ -1,0 +1,243 @@
+{
+  "note": "Written by tools/process.ts from prompts/*.yaml. Do not edit by hand.",
+  "textures": {
+    "stone": {
+      "kind": "material",
+      "tile": 16,
+      "priority": 1,
+      "roughness": 0.92,
+      "source": "synth",
+      "hash": "c8bed54d72db81a4",
+      "maps": {
+        "albedo": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/stone.albedo.2048.ktx2",
+              "width": 2048,
+              "height": 2048,
+              "bytes": 420818
+            },
+            "mobile": {
+              "file": "tex/stone.albedo.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 137166
+            }
+          }
+        },
+        "normal": {
+          "srgb": false,
+          "tiers": {
+            "desktop": {
+              "file": "tex/stone.normal.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 864353
+            },
+            "mobile": {
+              "file": "tex/stone.normal.512.ktx2",
+              "width": 512,
+              "height": 512,
+              "bytes": 213521
+            }
+          }
+        }
+      }
+    },
+    "flagstone": {
+      "kind": "material",
+      "tile": 8,
+      "priority": 2,
+      "roughness": 0.8,
+      "source": "synth",
+      "hash": "ad52209ab254eb9e",
+      "maps": {
+        "albedo": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/flagstone.albedo.2048.ktx2",
+              "width": 2048,
+              "height": 2048,
+              "bytes": 338238
+            },
+            "mobile": {
+              "file": "tex/flagstone.albedo.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 113409
+            }
+          }
+        },
+        "normal": {
+          "srgb": false,
+          "tiers": {
+            "desktop": {
+              "file": "tex/flagstone.normal.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 777227
+            },
+            "mobile": {
+              "file": "tex/flagstone.normal.512.ktx2",
+              "width": 512,
+              "height": 512,
+              "bytes": 207358
+            }
+          }
+        }
+      }
+    },
+    "hall-glass": {
+      "kind": "glass",
+      "tile": 1,
+      "priority": 1,
+      "roughness": 0.3,
+      "source": "synth",
+      "hash": "3fec344f194b9944",
+      "maps": {
+        "albedo": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/hall-glass.albedo.512x2048.ktx2",
+              "width": 512,
+              "height": 2048,
+              "bytes": 165931
+            },
+            "mobile": {
+              "file": "tex/hall-glass.albedo.256x1024.ktx2",
+              "width": 256,
+              "height": 1024,
+              "bytes": 64794
+            }
+          }
+        },
+        "emissive": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/hall-glass.emissive.512x2048.ktx2",
+              "width": 512,
+              "height": 2048,
+              "bytes": 631388
+            },
+            "mobile": {
+              "file": "tex/hall-glass.emissive.256x1024.ktx2",
+              "width": 256,
+              "height": 1024,
+              "bytes": 218718
+            }
+          }
+        }
+      }
+    },
+    "slate": {
+      "kind": "material",
+      "tile": 8,
+      "priority": 2,
+      "roughness": 0.72,
+      "metalness": 0.08,
+      "source": "synth",
+      "hash": "443e0af27cf65088",
+      "maps": {
+        "albedo": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/slate.albedo.2048.ktx2",
+              "width": 2048,
+              "height": 2048,
+              "bytes": 264973
+            },
+            "mobile": {
+              "file": "tex/slate.albedo.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 108150
+            }
+          }
+        },
+        "normal": {
+          "srgb": false,
+          "tiers": {
+            "desktop": {
+              "file": "tex/slate.normal.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 719538
+            },
+            "mobile": {
+              "file": "tex/slate.normal.512.ktx2",
+              "width": 512,
+              "height": 512,
+              "bytes": 184685
+            }
+          }
+        }
+      }
+    },
+    "tower-windows": {
+      "kind": "atlas",
+      "tile": 16,
+      "priority": 1,
+      "roughness": 0.92,
+      "source": "synth",
+      "hash": "1781e4776e0e3d65",
+      "maps": {
+        "albedo": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/tower-windows.albedo.2048.ktx2",
+              "width": 2048,
+              "height": 2048,
+              "bytes": 462310
+            },
+            "mobile": {
+              "file": "tex/tower-windows.albedo.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 151322
+            }
+          }
+        },
+        "normal": {
+          "srgb": false,
+          "tiers": {
+            "desktop": {
+              "file": "tex/tower-windows.normal.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 858015
+            },
+            "mobile": {
+              "file": "tex/tower-windows.normal.512.ktx2",
+              "width": 512,
+              "height": 512,
+              "bytes": 218575
+            }
+          }
+        },
+        "emissive": {
+          "srgb": true,
+          "tiers": {
+            "desktop": {
+              "file": "tex/tower-windows.emissive.1024.ktx2",
+              "width": 1024,
+              "height": 1024,
+              "bytes": 87809
+            },
+            "mobile": {
+              "file": "tex/tower-windows.emissive.512.ktx2",
+              "width": 512,
+              "height": 512,
+              "bytes": 28380
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { CLEARANCE, insideColliders } from '../flight/flight';
 import type { Route } from '../flight/route';
 import type { Colliders } from '../world/castle';
 import type { Heights } from '../world/heights';
+import { hallWalls, insideLancet } from '../world/kit/hall';
 
 export type Level = 'error' | 'warn';
 
@@ -300,6 +301,7 @@ export function sampleRoute(route: Route, data: RouteData, world: WorldData, hei
       flags.push(f);
     }
     const name = `route leg ${leg}→${(leg + 1) % n}`;
+    for (const miss of hallMisses(route, leg, n, world)) problems.push({ level: 'warn', where: name, what: miss });
     if (worst.lowAt) {
       problems.push({ level: 'warn', where: name, what: `dips ${worst.low.toFixed(1)} m under the ${CLEARANCE} m clearance near (${worst.lowAt.x.toFixed(0)}, ${worst.lowAt.z.toFixed(0)}); the ghost floats up off the route` });
     }
@@ -347,3 +349,34 @@ export function checkData(world: WorldData, route: RouteData, zones: Zone[]): Pr
   }
   return problems;
 }
+
+/**
+ * Where a leg crosses a wall of the great hall through stone rather than a window. Flying in
+ * through the glass is the signature moment (design doc §18), so the route must hit the glass.
+ */
+function hallMisses(route: Route, leg: number, n: number, world: WorldData): string[] {
+  const hw = world.hall;
+  const spec = { x0: hw.x[0], x1: hw.x[1], z0: hw.z[0], z1: hw.z[1], y0: hw.floor, wallH: hw.wallHeight, ridge: hw.ridge, bays: hw.bays };
+  const out: string[] = [];
+  const steps = 400;
+  let prev = route.point(leg / n);
+  for (let k = 1; k <= steps; k++) {
+    const p = route.point((leg + k / steps) / n);
+    for (const w of hallWalls(spec)) {
+      const a = prev[w.axis] - w.at;
+      const b = p[w.axis] - w.at;
+      if (a * b >= 0) continue;
+      const q = prev.clone().lerp(p, a / (a - b));
+      const along = q[w.along];
+      const [lo, hi] = w.along === 'x' ? [spec.x0, spec.x1] : [spec.z0, spec.z1];
+      const up = q.y - spec.y0;
+      if (along < lo || along > hi || up < 0 || up > spec.wallH) continue;
+      if (w.windows.some((win) => insideLancet(along - win.c, up - win.sill, win.span, win.rise))) continue;
+      const near = w.windows.reduce((best, win) => (Math.abs(along - win.c) < Math.abs(along - best.c) ? win : best));
+      out.push(`goes through the hall's ${w.name} in stone at ${w.along} ${along.toFixed(1)}, ${up.toFixed(1)} m up; the nearest window is centred on ${w.along} ${near.c.toFixed(1)}`);
+    }
+    prev = p;
+  }
+  return out;
+}
+

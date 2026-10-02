@@ -1,0 +1,38 @@
+# Flagstones: the hall floor, the gate landing and stairs, the viaduct deck.
+id: flagstone
+kind: material
+tile: 8
+seamless: true
+priority: 2
+roughness: 0.8
+
+generate:
+  size: 1024x1024
+  prompt: >-
+    A worn medieval flagstone floor seen from directly above: large rectangular grey stone flags
+    in loose rows, 50 to 120 cm across, edges rounded by centuries of feet, polished centres,
+    dark dirt in the joints. About 8 m of floor shown.
+
+source: synth
+synth:
+  type: masonry
+  seed: 311
+  course: [0.55, 0.95]
+  length: [0.55, 1.25]
+  joint: 0.014
+  bevel: 0.045
+  warp: 0.045
+  relief: 0.01
+  rough: 0.005
+  chip: 0.4
+  colors: ['#4a4743', '#53504a', '#45423f', '#4f4b45', '#57524a']
+  jitter: 0.14
+  mortar: '#2c2a27'
+  grime: '#1d1c1a'
+  stains: 0
+  lichen: { color: '#5d6150', amount: 0.08 }
+  wear: 0.7
+
+maps:
+  albedo: { encode: etc1s, tiers: { desktop: 2048, mobile: 1024 } }
+  normal: { encode: uastc, tiers: { desktop: 1024, mobile: 512 }, fromLuminance: 0.03 }

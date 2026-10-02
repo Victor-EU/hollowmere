@@ -1,0 +1,33 @@
+# Roof slate: spires, the hall roof, the boathouse. The image's top is up the roof.
+id: slate
+kind: material
+tile: 8
+seamless: true
+priority: 2
+roughness: 0.72
+metalness: 0.08
+
+generate:
+  size: 1024x1024
+  prompt: >-
+    Old blue-grey roof slates in overlapping courses, about 22 cm exposed per course, slates of
+    slightly varying widths with rounded lower corners, a few darker and lighter slates, pale
+    lichen spots and dark moss along the lower edges. About 8 m of roof shown, courses running
+    horizontally.
+
+source: synth
+synth:
+  type: slate
+  seed: 9
+  exposure: 0.22
+  width: [0.24, 0.38]
+  gap: 0.012
+  step: 0.012
+  colors: ['#2d3034', '#33363a', '#282b30', '#373737', '#2f3236']
+  jitter: 0.16
+  lichen: { color: '#77796a', amount: 0.35 }
+  moss: { color: '#262d22', amount: 0.5 }
+
+maps:
+  albedo: { encode: etc1s, tiers: { desktop: 2048, mobile: 1024 } }
+  normal: { encode: uastc, tiers: { desktop: 1024, mobile: 512 }, fromLuminance: 0.03 }

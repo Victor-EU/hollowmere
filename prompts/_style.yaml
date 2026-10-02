@@ -1,0 +1,21 @@
+# Style guide, prepended to every prompt (design doc §11).
+#
+# `all` goes on everything. `scene` adds the night look for skies, sprites and imposters.
+# `material` replaces it for tileable surfaces and atlases (seamless: true), which must be evenly
+# lit so the renderer's own moonlight and lanterns can light them.
+
+all: >-
+  Painterly but not cartoonish. No text, no logos, no signatures, no watermarks, no recognizable
+  characters or franchises.
+
+scene: >-
+  A moonlit night: cold blue key light, warm amber practical lights.
+
+material: >-
+  A flat, square, orthographic texture of a surface seen straight on, filling the whole frame.
+  Even, shadowless, overcast lighting with no highlights, no vignette and no perspective. It must
+  tile seamlessly: nothing may be cut off at the edges.
+
+# The image model and its defaults. The model name changes over time; override with --model.
+model: gpt-image-1
+quality: high

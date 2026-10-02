@@ -1,0 +1,28 @@
+# The great hall's stained glass: one window opening, a pointed arch 3.6 m wide and 16 m tall,
+# holding two lights and a rose. Not tileable; the kit maps it once per bay.
+id: hall-glass
+kind: glass
+tile: 1
+seamless: false
+priority: 1
+roughness: 0.3
+
+generate:
+  size: 1024x1536
+  prompt: >-
+    A tall gothic stained-glass window, a pointed arch filling the frame from edge to edge: two
+    lancet lights with a rose in the head, stone tracery between them. Amber and gold quarries,
+    ruby and gold medallions with abstract star patterns, a few teal and violet accents, dark
+    lead lines and iron saddle bars. Glowing from candlelight behind. Abstract patterns only, no
+    figures, no faces, no symbols.
+
+source: synth
+synth:
+  type: glass
+  seed: 42
+  span: 3.6
+  rise: 16
+
+maps:
+  albedo: { encode: etc1s, tiers: { desktop: 512x2048, mobile: 256x1024 } }
+  emissive: { encode: uastc, tiers: { desktop: 512x2048, mobile: 256x1024 }, derive: { minLuminance: 0.2, minWarmth: -1 } }

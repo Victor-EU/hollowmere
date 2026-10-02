@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tools",
     "shots": "node tools/shots.ts",
-    "validate": "node tools/validate.ts"
+    "validate": "node tools/validate.ts",
+    "generate": "node tools/generate.ts",
+    "process": "node tools/process.ts"
   },
   "dependencies": {
     "three": "0.186.1"
@@ -18,8 +20,11 @@
   "devDependencies": {
     "@types/node": "24.19.1",
     "@types/three": "0.186.0",
+    "ktx2-encoder": "0.6.0",
     "playwright-core": "1.63.0",
+    "sharp": "0.35.5",
     "typescript": "7.0.2",
-    "vite": "8.3.2"
+    "vite": "8.3.2",
+    "yaml": "2.9.1"
   }
 }

@@ -1,0 +1,46 @@
+# Tower walls: the castle stone with lit, dim and dark lancets, plus the emissive mask.
+id: tower-windows
+kind: atlas
+tile: 16
+seamless: true
+priority: 1
+roughness: 0.92
+
+generate:
+  size: 1024x1024
+  prompt: >-
+    A castle tower wall of weathered neutral grey ashlar, about 16 m square, with gothic lancet
+    windows on a loose grid of four columns and three floors: some single lancets, some paired
+    lancets under one arch, a few arrow slits, some cells plain wall. Pale dressed-stone
+    surrounds and sills, diamond-leaded glass. Most windows glow warm amber from candlelight
+    inside, a few dimly, the rest dark.
+
+source: synth
+synth:
+  type: windows
+  seed: 177
+  course: [0.42, 0.78]
+  length: [0.6, 1.8]
+  joint: 0.026
+  bevel: 0.03
+  warp: 0.03
+  relief: 0.022
+  rough: 0.012
+  chip: 0.7
+  colors: ['#55524c', '#4d4a45', '#5b5750', '#4a4844', '#57534b', '#504d49']
+  jitter: 0.18
+  mortar: '#5a554c'
+  grime: '#1f2120'
+  stains: 0.5
+  lichen: { color: '#6b6e58', amount: 0.3 }
+  grid: [4, 3]
+  kinds: { lancet: 0.5, double: 0.14, slit: 0.12 }
+  lit: 0.58
+  dim: 0.16
+  dressed: '#6a665e'
+
+maps:
+  albedo: { encode: etc1s, tiers: { desktop: 2048, mobile: 1024 } }
+  normal: { encode: uastc, tiers: { desktop: 1024, mobile: 512 }, fromLuminance: 0.05 }
+  # Generated images: warm, bright, saturated pixels count as lit glass.
+  emissive: { encode: uastc, tiers: { desktop: 1024, mobile: 512 }, derive: { minLuminance: 0.35, minWarmth: 0.25 } }

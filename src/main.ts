@@ -17,6 +17,7 @@ import type { DevHost, DevTools } from './dev/types';
 import { makePost } from './render/post';
 import { makeHud } from './ui/hud';
 import { makeInput } from './ui/input';
+import { loadLibrary, pickTier } from './world/assets';
 import { buildCastle } from './world/castle';
 import { Heights } from './world/heights';
 import { makeLights } from './world/lights';
@@ -65,7 +66,7 @@ async function boot() {
   // World.
   const tex = makeTextures(renderer.capabilities.getMaxAnisotropy());
   initSprites(tex.glow);
-  const M = makeMaterials(tex);
+  const M = makeMaterials(await loadLibrary(renderer, pickTier()));
   const heights = new Heights(world);
   const sky = makeSky(world, tex, fogColor);
   const castle = buildCastle(world, heights, M, tex);
