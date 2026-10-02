@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tools",
     "shots": "node tools/shots.ts",
+    "compare": "node tools/compare.ts",
     "validate": "node tools/validate.ts",
     "generate": "node tools/generate.ts",
     "process": "node tools/process.ts"

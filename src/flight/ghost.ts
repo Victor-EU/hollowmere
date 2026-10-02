@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LAYER } from '../render/layers';
 import { lerp } from '../world/math';
 
 /** Lathe profile: flared skirt below, dome head above. About 1.6 m tall before scaling. */
@@ -93,6 +94,8 @@ export function makeGhost(seed: number, glow: number): Ghost {
   const material = ghostMaterial(seed, glow);
   const body = new THREE.Mesh(sharedGeometry, material);
   body.renderOrder = 5;
+  // See-through: drawn after the mist, sorted with the glows (render/layers.ts).
+  body.layers.set(LAYER.late);
   group.add(body);
   const face = new THREE.MeshBasicMaterial({ name: 'ghost-face', color: new THREE.Color('#06070c'), fog: false });
   for (const sx of [-1, 1]) {

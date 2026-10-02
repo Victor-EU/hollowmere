@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { RockColumn, WorldData } from '../data';
 import type { Heights } from './heights';
-import { fbm, noise2, smoothstep } from './math';
+import { fbm, noise2, ridged, smoothstep } from './math';
 
 export function makeTerrain(world: WorldData, heights: Heights): THREE.Mesh {
   const { size, segments } = world.terrain;
@@ -38,10 +38,13 @@ export function makeTerrain(world: WorldData, heights: Heights): THREE.Mesh {
   return mesh;
 }
 
-/** A craggy rock column (the castle cliff or the gate outcrop): a noise-displaced, flat-shaded cylinder. */
+/**
+ * A craggy rock column (the castle cliff or the gate outcrop): a noise-displaced, flat-shaded
+ * cylinder, with vertical crags and ledges so the face reads as rock in the fill light.
+ */
 export function makeRockColumn(o: RockColumn, name: string): THREE.Mesh {
   const H = o.top - o.bottom;
-  const g = new THREE.CylinderGeometry(o.topRadius, o.bottomRadius, H, 64, 16, false);
+  const g = new THREE.CylinderGeometry(o.topRadius, o.bottomRadius, H, 128, 36, false);
   const p = g.getAttribute('position');
   const col = new Float32Array(p.count * 3);
   const top = new THREE.Color('#1f2a22');
@@ -62,7 +65,15 @@ export function makeRockColumn(o: RockColumn, name: string): THREE.Mesh {
     const isTop = y > H / 2 - 0.01;
     const tt = isTop ? 1 : t;
     let f = 1 + 0.07 * noise2(ca * 1.6 + seed, sa * 1.6 + tt * 0.8) + 0.05 * noise2(ca * 6 + seed, sa * 6 + tt * 3) + 0.025 * noise2(ca * 20, sa * 20 + tt * 9);
-    if (!isTop) f += 0.03 * noise2(ca * 3 + 4, tt * 14) * (1 - t);
+    // Crags: ridges stretched vertically, sharp where the noise crosses zero. The same at the rim
+    // for the side and the cap, so the edge stays closed.
+    const crag = ridged(ca * 5 + seed, sa * 5 + tt * 1.2, 3);
+    f += 0.05 * (crag - 0.45);
+    if (!isTop) {
+      f += 0.03 * noise2(ca * 3 + 4, tt * 14) * (1 - t);
+      // Ledges: horizontal bands, fading out toward the rim.
+      f += 0.018 * noise2(tt * 22 + seed, ca * 1.3 + sa * 0.7) * smoothstep(1, 0.85, t);
+    }
     p.setX(i, x * f);
     p.setZ(i, z * f);
     if (!isTop && t < 0.97) p.setY(i, y + noise2(ca * 4 + seed, sa * 4) * 2.2);
@@ -71,6 +82,8 @@ export function makeRockColumn(o: RockColumn, name: string): THREE.Mesh {
     else {
       c.copy(dark).lerp(rock, smoothstep(0.0, 0.8, t) * (0.6 + v * 0.6));
       c.lerp(moss, smoothstep(0.82, 0.98, t) * v);
+      // Darker in the clefts between crags.
+      c.multiplyScalar(0.55 + 0.6 * Math.min(1, crag));
     }
     col.set([c.r, c.g, c.b], i * 3);
   }

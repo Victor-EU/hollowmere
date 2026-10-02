@@ -45,7 +45,15 @@ export interface WarmLightData {
 
 export type BoxOrRing = { min: Vec3; max: Vec3 } | { ring: Range; y: Range };
 
-export type MistBank = BoxOrRing & { count: number; size: Range; opacity: Range; tint?: number };
+export type MistBank = BoxOrRing & {
+  count: number;
+  /** Billboard width, metres. */
+  size: Range;
+  /** Height as a fraction of the width; 0.42 if left out. Low banks hug the water. */
+  aspect?: number;
+  opacity: Range;
+  tint?: number;
+};
 
 export interface GhostGroup {
   /** A named anchor ('gate', 'hall', 'pier') or a point. */
@@ -84,11 +92,10 @@ export interface WorldData {
   boathouse: { from: Vec2; toward: Vec2 };
   cobwebs: { at: Vec3; size: number; yaw: number; roll: number }[];
   lights: {
-    hemisphere: { sky: string; ground: string; intensity: number };
-    moon: { color: string; intensity: number; shadowExtent: number; shadowMap: number };
+    /** Half-width of the moon's shadow camera round the castle, and its map size. */
+    moonShadow: { extent: number; mapSize: number };
     warm: WarmLightData[];
   };
-  fog: { color: string; density: number };
   moon: { direction: Vec3; distance: number; size: number };
   castleCentre: Vec3;
   bounds: { softRadius: number; fogEnd: number; ceiling: number };
@@ -104,6 +111,62 @@ export interface WorldData {
     wisps: { count: number; min: Vec3; max: Vec3; radius: Range; speed: Range };
     wyrm: { center: Vec3; radius: number; segments: number };
     mist: MistBank[];
+  };
+}
+
+/** data/look.json: how the world looks. Colours are sRGB hex; tuned live with the dev look panel. */
+export interface LookData {
+  grade: {
+    exposure: number;
+    /** Mix toward a smoothstep S-curve after tone mapping, 0..1. */
+    contrast: number;
+    saturation: number;
+    /** Split tone: multipliers for the shadows and the highlights. */
+    shadows: Vec3;
+    highlights: Vec3;
+    /** What black becomes on screen, so the night lifts to deep blue instead of black. */
+    blacks: string;
+    vignette: number;
+    grain: number;
+    /** Chromatic aberration at the edges. */
+    aberration: number;
+  };
+  bloom: { strength: number; radius: number; threshold: number };
+  /** Emissive intensities, tuned against the bloom; the hall glass also gets a tint toward amber. */
+  emissive: { towerWindow: number; hallGlass: number; hallGlassTint: string; pumpkinFace: number };
+  hemisphere: { sky: string; ground: string; intensity: number };
+  moonlight: { color: string; intensity: number };
+  /** Cold skylight from the side away from the moon, so shadowed walls keep their stone. */
+  fill: { color: string; intensity: number };
+  /** Sky dome: gradient, a broad glow round the moon and a tighter halo. */
+  sky: { zenith: string; horizon: string; glow: string; halo: string };
+  fog: { color: string; density: number };
+  water: {
+    deep: string;
+    /** Multiplies the reflection. */
+    tint: Vec3;
+    /** Reflectance looking straight down; it rises to 1 at grazing angles. */
+    reflectivity: number;
+    /** Ripple normal strength. */
+    ripple: number;
+    /** Ripple tile size, metres. */
+    scale: number;
+    /** How far the ripples bend the reflection. */
+    distortion: number;
+    /** The moon's glitter path. */
+    glitter: number;
+    /** Specular exponent of the glitter: higher is finer sparkle. */
+    sharpness: number;
+  };
+  mist: {
+    color: string;
+    opacity: number;
+    /** Metres over which mist fades out where it meets geometry (soft particles). */
+    softness: number;
+    /** Mist fades in between these distances from the camera, so flying through it never pops. */
+    near: Range;
+    /** Forward scatter: mist brightens looking toward the moon. */
+    moonGlow: number;
   };
 }
 

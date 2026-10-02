@@ -2,13 +2,14 @@ import type { FlightInput } from '../flight/flight';
 import { isTyping } from '../ui/input';
 import { checkData, GeometryWatch, type Problem } from './checks';
 import { FreeCam } from './freecam';
+import { LookPanel } from './lookPanel';
 import { RouteEditor } from './routeEditor';
 import { makeStats, type FrameStats } from './stats';
 import type { DevHost, DevTools } from './types';
 
 const PREFS = 'hollowmere:dev';
 const SESSION = 'hollowmere:dev-session';
-const KEYS = '` stats · V free camera · R route editor · T pause · . step · G ghost here · K checks';
+const KEYS = '` stats · V free camera · R route editor · L look · T pause · . step · G ghost here · K checks';
 
 export interface DevReport {
   problems: Problem[];
@@ -57,7 +58,7 @@ function log(problems: Problem[], title: string) {
 export function installDev(host: DevHost): Dev {
   const { flight, hud, input, scene } = host;
   const prefs = read(() => localStorage, PREFS, { stats: false });
-  const session = read(() => sessionStorage, SESSION, { editor: false, editorFreecam: false });
+  const session = read(() => sessionStorage, SESSION, { editor: false, editorFreecam: false, look: false });
 
   const dock = document.createElement('div');
   dock.className = 'dev-dock';
@@ -87,7 +88,7 @@ export function installDev(host: DevHost): Dev {
   }
 
   const stats = makeStats(host, dock, () => {
-    const modes = [paused && 'paused', freecam.active && `free camera ${Math.round(freecam.speed)} m/s`, editor.active && 'route editor'].filter(Boolean);
+    const modes = [paused && 'paused', freecam.active && `free camera ${Math.round(freecam.speed)} m/s`, editor.active && 'route editor', lookPanel.active && 'look panel'].filter(Boolean);
     const errors = count('error');
     const warns = count('warn');
     const g = watch.stats;
@@ -119,6 +120,13 @@ export function installDev(host: DevHost): Dev {
     },
   });
 
+  const lookPanel = new LookPanel(dock);
+  function setLook(on: boolean) {
+    if (on) lookPanel.open();
+    else lookPanel.close();
+    write(() => sessionStorage, SESSION, { ...read(() => sessionStorage, SESSION, session), look: on });
+  }
+
   function setStats(on: boolean) {
     stats.visible = on;
     write(() => localStorage, PREFS, { stats: on });
@@ -140,7 +148,7 @@ export function installDev(host: DevHost): Dev {
       if (editorFreecam) setFreecam(false);
       editorFreecam = false;
     }
-    write(() => sessionStorage, SESSION, { editor: on, editorFreecam });
+    write(() => sessionStorage, SESSION, { ...read(() => sessionStorage, SESSION, session), editor: on, editorFreecam });
   }
   /** Drop the ghost in front of the free camera and hand it over, as if the player had flown there. */
   function ghostHere() {
@@ -167,6 +175,7 @@ export function installDev(host: DevHost): Dev {
       Backquote: () => setStats(!stats.visible),
       KeyV: () => setFreecam(!freecam.active),
       KeyR: () => setEditor(!editor.active),
+      KeyL: () => setLook(!lookPanel.active),
       KeyT: () => (paused = !paused),
       Period: () => {
         paused = true;
@@ -193,6 +202,7 @@ export function installDev(host: DevHost): Dev {
   if (freecam.restore() && session.editor) {
     editor.open();
   } else if (session.editor) setEditor(true);
+  if (session.look) lookPanel.open();
   refreshBadge();
 
   const idle: FlightInput = { forward: 0, strafe: 0, rise: 0, boost: false, lookDX: 0, lookDY: 0, zoom: 1 };

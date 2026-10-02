@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { WorldData } from '../data';
+import { look, onLook } from '../render/look';
 import { lerp, range, rng } from './math';
 import type { Textures } from './textures';
 
@@ -23,7 +24,14 @@ export function makeSky(world: WorldData, tex: Textures, fogColor: THREE.Color):
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
-      uniforms: { uMoon: { value: moonDir }, uFog: { value: fogColor } },
+      uniforms: {
+        uMoon: { value: moonDir },
+        uFog: { value: fogColor },
+        uZenith: { value: new THREE.Color() },
+        uHorizon: { value: new THREE.Color() },
+        uGlow: { value: new THREE.Color() },
+        uHalo: { value: new THREE.Color() },
+      },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
         void main() {
@@ -34,21 +42,25 @@ export function makeSky(world: WorldData, tex: Textures, fogColor: THREE.Color):
         }`,
       fragmentShader: /* glsl */ `
         varying vec3 vDir;
-        uniform vec3 uMoon;
-        uniform vec3 uFog;
+        uniform vec3 uMoon, uFog, uZenith, uHorizon, uGlow, uHalo;
         void main() {
           vec3 d = normalize(vDir);
           float h = d.y;
-          vec3 zen = vec3(0.0035, 0.005, 0.012);
-          vec3 hor = vec3(0.028, 0.036, 0.06);
-          vec3 c = mix(hor, zen, smoothstep(-0.02, 0.65, h));
+          vec3 c = mix(uHorizon, uZenith, smoothstep(-0.02, 0.65, h));
           float m = max(dot(d, uMoon), 0.0);
-          c += vec3(0.06, 0.075, 0.11) * pow(m, 5.0) + vec3(0.16, 0.17, 0.2) * pow(m, 40.0);
+          c += uGlow * pow(m, 5.0) + uHalo * pow(m, 40.0);
           c = mix(c, uFog, smoothstep(0.08, -0.06, h));
           gl_FragColor = vec4(c, 1.0);
         }`,
     }),
   );
+  const u = (dome.material as THREE.ShaderMaterial).uniforms;
+  onLook(() => {
+    u.uZenith.value.set(look.sky.zenith);
+    u.uHorizon.value.set(look.sky.horizon);
+    u.uGlow.value.set(look.sky.glow);
+    u.uHalo.value.set(look.sky.halo);
+  });
   dome.frustumCulled = false;
   dome.renderOrder = -10;
   group.add(dome);

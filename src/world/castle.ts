@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Vec2, WallData, WorldData } from '../data';
+import { LAYER } from '../render/layers';
 import type { Heights } from './heights';
 import { boathouse } from './kit/boathouse';
 import { gate } from './kit/gate';
@@ -126,6 +127,7 @@ export function buildCastle(world: WorldData, heights: Heights, M: Materials, te
     m.position.set(...w.at);
     m.rotation.set(0, w.yaw, w.roll);
     m.name = 'cobweb';
+    m.layers.set(LAYER.late);
     group.add(m);
   }
 

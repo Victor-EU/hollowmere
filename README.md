@@ -17,7 +17,8 @@ npm run dev
 | `npm run build` | Typecheck, then a static build in `dist/` (relative paths, deployable anywhere) |
 | `npm run typecheck` | `tsc` over `src/` and `tools/` |
 | `npm run validate [-- <devUrl>] [--strict]` | Checks the data files and every geometry in headless Chrome, then flies the route and measures draw calls and triangles against the budgets. Starts its own dev server unless given a URL. Exits 1 on errors; `--strict` also fails on warnings and budget overruns |
-| `npm run shots -- <url> <outDir> [--mockup[=url]] [--views]` | Screenshots of six fixed route points in headless Chrome; with `--mockup`, the same points from the mockup for side-by-side checks. With `--views` (dev server only), seven fixed free-camera views of the castle instead, steadier for judging materials and geometry |
+| `npm run shots -- <url> <outDir> [--mockup[=url]] [--views] [--clean]` | Screenshots of six fixed route points in headless Chrome; with `--mockup`, the same points from the mockup for side-by-side checks. With `--views` (dev server only), seven fixed free-camera views of the castle instead, steadier for judging materials and geometry. `--clean` hides the HUD |
+| `npm run compare -- <reference> <screenshot> [out.png]` | A screenshot beside a reference painting, each over its palette, plus the numbers the look targets talk about; see [The look](#the-look) |
 | `npm run process [-- <id>...] [--force]` | Builds the textures the app ships (`public/assets/`) from `prompts/*.yaml`; see [Textures](#textures) |
 | `npm run generate -- <id> [--n=4] [--dry-run]` | Asks OpenAI's image API for texture candidates (needs `OPENAI_API_KEY`; billed to that key) |
 
@@ -33,6 +34,7 @@ In `npm run dev` only:
 |---|---|
 | `` ` `` | Stats overlay: fps, CPU and GPU frame time, draw calls and triangles against the budgets (300 and 1.5M), memory, resolution, where the ghost is and what autofly is doing |
 | `V` | Free camera. Same keys and drag as flying; the wheel sets its speed, Shift is 5×. The ghost keeps flying on its own. The camera's pose survives reloads, so it stays put while you edit code |
+| `L` | Look panel: sliders and colour pickers for everything in `data/look.json`, applied live; `⌘S` saves back to the file |
 | `R` | Route editor (opens the free camera). Click a handle to select it, drag the gizmo to move it, edit speed, names and pass-through legs in the panel. `[` `]` step through waypoints, `I` inserts, `Delete` removes, `J` flies the route from the selected point, `⌘Z` / `⇧⌘Z` undo and redo, `⌘S` saves to `data/route.json` without reloading |
 | `T` / `.` | Pause the world / step one frame |
 | `G` | Drop the ghost in front of the free camera and fly it from there |
@@ -43,6 +45,21 @@ The route line is coloured by speed. It turns red where it dips under the ghost'
 The route check also makes sure autofly enters and leaves the great hall through its windows rather than the stone between them, since flying in through the glass is the signature moment.
 
 Geometry checks run before the first frame and then every half second over whatever changed: NaN or Infinity in any attribute, instance matrix, transform or uniform; zero-length normals on lit meshes (normalising zero gives NaN on the GPU); indices past the end; attributes shorter than the positions. Problems go to the console, and a red badge appears top right while the overlay is closed.
+
+## The look
+
+How the world looks lives in `data/look.json`, apart from where things are: the grade (exposure, contrast, split tone, the lifted black, vignette, grain), bloom, the emissive levels, moonlight, the hemisphere and the cold fill from the far side, the sky's colours, fog, the lake and the mist. Tune it in a dev build with the look panel (`L`) while looking at the result, and save from there. The emissive levels and bloom were tuned together: change them only while looking (design doc §8).
+
+The scene draws in two goes (`src/render/post.ts`): everything that writes depth, then, with that depth in a texture, the see-through things. That lets the mist fade softly wherever it meets water, rock or wall, so a bank can sit right on the lake. The lake is a planar reflection bent by scrolling ripple normals, with fresnel and the moon's glitter path.
+
+The mood-board paintings (design doc §3a) are references only and stay out of the repo. Put them in `reference/`, which is gitignored, and check a view against one:
+
+```bash
+npm run shots -- http://localhost:5173 shots --clean
+npm run compare -- reference/painting-a.png shots/lake-port.png
+```
+
+It writes `shots/lake-port-compare.png` and prints, for both images, the brightness spread, how much is near black, how much is warm light, and the colour of the sky, the shadows and the highlights. Take a quality, never a composition: compare palette and light, not layout.
 
 ## Textures
 
@@ -61,7 +78,8 @@ prompts/<id>.yaml ─ npm run generate ─▶ assets/raw/<id>/<candidate>.png   
 
 ## Where things live
 
-- `data/world.json`: landmark positions and sizes, lights, and where creatures live
+- `data/world.json`: landmark positions and sizes, warm lights, mist banks, and where creatures live
+- `data/look.json`: grade, bloom, emissive levels, moon and fill light, sky, fog, water and mist
 - `data/route.json`: the autofly loop and its named points
 - `data/zones.json`: audio zones and the place names the HUD shows
 - `src/world/`: terrain, rock columns, sky, water, mist, trees, lights, and the texture library loader
@@ -69,11 +87,11 @@ prompts/<id>.yaml ─ npm run generate ─▶ assets/raw/<id>/<candidate>.png   
 - `src/flight/`: the ghost, flight model, camera and autofly
 - `src/life/`: pumpkins, candles, ghosts, bats, the wyrm, the lake's wisps and boat
 - `src/audio/`: synthesized music and ambience, driven by the zones
-- `src/render/`: post-processing (bloom, grade)
+- `src/render/`: the two-pass scene render, bloom and grade, and the look data's live hooks
 - `src/ui/`: HUD, controls, touch input
-- `src/dev/`: stats overlay, free camera, route editor, geometry and data checks (left out of production builds, except the overlay behind `?stats`)
+- `src/dev/`: stats overlay, free camera, route editor, look panel, geometry and data checks (left out of production builds, except the overlay behind `?stats`)
 - `prompts/`: one spec per texture, plus the style guide prepended to every prompt
 - `public/assets/`: the processed textures and their manifest
-- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), headless Chrome screenshots and validation, and the dev-server endpoint the route editor saves through
+- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), headless Chrome screenshots, validation and the reference comparison, and the dev-server endpoint the route editor and look panel save through
 
 No analytics, no cookies, no network calls after load. The one local-storage key is the sound preference (dev builds also remember whether the stats overlay is open).

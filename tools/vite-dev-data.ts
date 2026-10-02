@@ -1,19 +1,50 @@
-// Dev server only: lets the in-app route editor write data/route.json.
+// Dev server only: lets the in-app route editor and look panel write their data files.
 //
 //   POST /__hollowmere/data/route.json   body: the formatted file
+//   POST /__hollowmere/data/look.json
 //
-// The write doesn't trigger a page reload, because the editor already has the new route live.
+// The write doesn't trigger a page reload, because the app already has the new data live.
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 
-type Check = (data: Record<string, unknown>) => string | null;
+type Check = (data: Record<string, unknown>, file: string) => string | null;
 
 const isNum = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
 const isIndex = (v: unknown, n: number) => Number.isInteger(v) && (v as number) >= 0 && (v as number) < n;
 
+/** Where `data` differs in shape from `ref`: keys, value types, array lengths; numbers must be finite. */
+function shapeProblem(data: unknown, ref: unknown, path: string): string | null {
+  if (typeof ref === 'number') return isNum(data) ? null : `${path} must be a finite number`;
+  if (typeof ref === 'string') return typeof data === 'string' ? null : `${path} must be a string`;
+  if (Array.isArray(ref)) {
+    if (!Array.isArray(data) || data.length !== ref.length) return `${path} must be an array of ${ref.length}`;
+    for (let i = 0; i < ref.length; i++) {
+      const p = shapeProblem(data[i], ref[i], `${path}[${i}]`);
+      if (p) return p;
+    }
+    return null;
+  }
+  if (typeof ref === 'object' && ref) {
+    if (typeof data !== 'object' || !data || Array.isArray(data)) return `${path} must be an object`;
+    const keys = Object.keys(ref);
+    const extra = Object.keys(data).find((k) => !keys.includes(k));
+    if (extra) return `unexpected key ${path}.${extra}`;
+    for (const k of keys) {
+      const p = shapeProblem((data as Record<string, unknown>)[k], (ref as Record<string, unknown>)[k], `${path}.${k}`);
+      if (p) return p;
+    }
+    return null;
+  }
+  return null;
+}
+
 const checks: Record<string, Check> = {
+  'look.json'(d, file) {
+    // Same keys and types as the file on disk: the panel tunes values, it doesn't add any.
+    return shapeProblem(d, JSON.parse(readFileSync(file, 'utf8')), 'look');
+  },
   'route.json'(d) {
     const w = d.waypoints;
     if (d.closed !== true) return '"closed" must be true';
@@ -45,7 +76,7 @@ export function devData(): Plugin {
           res.setHeader('content-type', 'text/plain');
           res.end(text);
         };
-        if (req.method !== 'POST' || !check) return reply(404, 'Only POST to route.json is supported');
+        if (req.method !== 'POST' || !check) return reply(404, `Only POST to ${Object.keys(checks).join(' or ')} is supported`);
         let body = '';
         req.setEncoding('utf8');
         req.on('data', (chunk: string) => {
@@ -59,12 +90,12 @@ export function devData(): Plugin {
           } catch (err) {
             return reply(400, `Not JSON: ${(err as Error).message}`);
           }
-          const problem = check(data);
-          if (problem) return reply(400, `data/${name}: ${problem}`);
           const file = resolve(root, 'data', name);
+          const problem = check(data, file);
+          if (problem) return reply(400, `data/${name}: ${problem}`);
           written.set(file, Date.now());
           writeFileSync(file, body.endsWith('\n') ? body : `${body}\n`);
-          server.config.logger.info(`  wrote data/${name} from the route editor`, { timestamp: true });
+          server.config.logger.info(`  wrote data/${name} from the dev tools`, { timestamp: true });
           reply(200, 'saved');
         });
       });

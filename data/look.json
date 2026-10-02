@@ -1,0 +1,32 @@
+{
+  "$comment": "How the world looks: grade, bloom, light, sky, fog, water and mist. Colours are sRGB hex. Tune these in a dev build with the look panel (L) while looking at the result, and save from there; see docs/design.md section 8.",
+  "grade": {
+    "exposure": 1.35,
+    "contrast": 0.3,
+    "saturation": 1,
+    "shadows": [0.9, 0.97, 1.12],
+    "highlights": [1.06, 1, 0.9],
+    "blacks": "#0a0e18",
+    "vignette": 0.72,
+    "grain": 0.04,
+    "aberration": 0.0016
+  },
+  "bloom": { "strength": 0.7, "radius": 0.5, "threshold": 1 },
+  "emissive": { "towerWindow": 2.1, "hallGlass": 1.25, "hallGlassTint": "#ffd6b0", "pumpkinFace": 2.4 },
+  "hemisphere": { "sky": "#4b5c85", "ground": "#1c140e", "intensity": 1.73 },
+  "moonlight": { "color": "#a9bde2", "intensity": 3.6 },
+  "fill": { "color": "#6f82b0", "intensity": 2.2 },
+  "sky": { "zenith": "#0b101d", "horizon": "#2f3545", "glow": "#454d5d", "halo": "#6f737c" },
+  "fog": { "color": "#2a3349", "density": 0.00125 },
+  "water": {
+    "deep": "#0d1219",
+    "tint": [0.72, 0.8, 0.92],
+    "reflectivity": 0.3,
+    "ripple": 0.16,
+    "scale": 22,
+    "distortion": 0.02,
+    "glitter": 3,
+    "sharpness": 1500
+  },
+  "mist": { "color": "#4b505b", "opacity": 0.8, "softness": 10, "near": [3, 25], "moonGlow": 0.15 }
+}

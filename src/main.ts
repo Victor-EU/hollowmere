@@ -1,7 +1,7 @@
 import './ui/style.css';
 import * as THREE from 'three';
 import { AudioEngine, zoneLabelAt } from './audio';
-import { route as routeData, world, zones } from './data';
+import { look, route as routeData, world, zones } from './data';
 import { Flight } from './flight/flight';
 import { Route } from './flight/route';
 import { makeBats } from './life/bats';
@@ -14,6 +14,7 @@ import type { LifeContext, Living } from './life/types';
 import { makeWyrm } from './life/wyrm';
 import type { Dev } from './dev';
 import type { DevHost, DevTools } from './dev/types';
+import { lookChanged, onLook } from './render/look';
 import { makePost } from './render/post';
 import { makeHud } from './ui/hud';
 import { makeInput } from './ui/input';
@@ -58,9 +59,11 @@ async function boot() {
   renderer.shadowMap.autoUpdate = false;
 
   const scene = new THREE.Scene();
-  const fogColor = new THREE.Color(world.fog.color);
-  const fog = new THREE.FogExp2(fogColor, world.fog.density);
+  const fog = new THREE.FogExp2(0, look.fog.density);
+  // Shared with the shaders that fog themselves (sky, water), so tuning reaches them too.
+  const fogColor = fog.color;
   scene.fog = fog;
+  onLook(() => fogColor.set(look.fog.color));
   const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 9000);
 
   // World.
@@ -72,8 +75,8 @@ async function boot() {
   const castle = buildCastle(world, heights, M, tex);
   const lights = makeLights(world, M, sky.moonDir, castle.boathouseLight, castle.lanternSpots);
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-  const water = makeWater(size.x, size.y, fogColor, world.fog.density);
-  const mist = makeMist(world.life.mist, heights, tex.mist, reduceMotion);
+  const water = makeWater(size.x, size.y, camera, fogColor, tex.ripples, sky.moonDir);
+  const mist = makeMist(world.life.mist, heights, tex.mist, sky.moonDir, reduceMotion);
   scene.add(
     sky.group,
     makeTerrain(world, heights),
@@ -83,7 +86,7 @@ async function boot() {
     makeTrees(world, heights, M, castle.viaduct.b),
     lights.group,
     water.mesh,
-    mist.group,
+    mist.mesh,
   );
 
   // Flight and sound.
@@ -191,10 +194,10 @@ async function boot() {
     const raw = input.read();
     flight.step(dt, dev ? dev.steer(raw, real) : raw);
     const t = flight.time;
-    fog.density = world.fog.density * (1 + 3 * flight.boundary);
+    fog.density = look.fog.density * (1 + 3 * flight.boundary);
     water.update(t, fog.density);
     sky.update(dt);
-    mist.update(dt, t);
+    mist.update(t);
     lights.update(t);
     for (const l of living) l.update(dt, t);
     audio.update({ position: flight.pos, yaw: flight.yaw, speed: flight.vel.length() }, dt);
@@ -237,7 +240,9 @@ async function boot() {
   });
 
   // A small hook for tinkering in the console, screenshot tests and `npm run validate`.
-  Object.assign(window, { hollowmere: { flight, scene, renderer, post, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) } });
+  Object.assign(window, {
+    hollowmere: { flight, scene, renderer, post, look, lookChanged, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
+  });
 }
 
 void boot();

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
+import { LAYER } from '../render/layers';
 
-// Additive point sprites for lanterns, flames, wisps and trails. Sizes are in world metres.
+// Additive point sprites for lanterns, flames, wisps and trails. Sizes are in world metres. They
+// draw on the late layer, after the mist (render/layers.ts).
 
 const VS = /* glsl */ `
   attribute vec4 aColor;
@@ -76,6 +78,7 @@ export class Pool {
     g.setAttribute('aSize', new THREE.BufferAttribute(this.size, 1).setUsage(THREE.DynamicDrawUsage));
     this.points = new THREE.Points(g, spriteMaterial());
     this.points.frustumCulled = false;
+    this.points.layers.set(LAYER.late);
   }
 
   emit(x: number, y: number, z: number, vx: number, vy: number, vz: number, life: number) {
@@ -130,5 +133,6 @@ export function staticGlow(spots: THREE.Vector3[], color: [number, number, numbe
   g.setAttribute('aSize', new THREE.BufferAttribute(sz, 1));
   const p = new THREE.Points(g, spriteMaterial());
   p.frustumCulled = false;
+  p.layers.set(LAYER.late);
   return p;
 }

@@ -1,12 +1,13 @@
 // Screenshots in headless Chrome, for parity and regression checks.
 //
-//   node tools/shots.ts [baseUrl] [outDir] [--mockup[=url]] [--views]
+//   node tools/shots.ts [baseUrl] [outDir] [--mockup[=url]] [--views] [--clean]
 //
 // By default it jumps the ghost to six fixed route points. With --views it instead parks the dev
 // free camera at fixed viewpoints of the castle (dev server only), which is steadier for judging
 // materials and geometry: only the creatures move. With --mockup it also shoots the mockup
 // (default docs/mockup/hollowmere-mockup.html on the same server) at the same route points,
-// writing <point>-port.png and <point>-mockup.png side by side.
+// writing <point>-port.png and <point>-mockup.png side by side. --clean hides the HUD, for
+// comparing against a reference painting with tools/compare.ts.
 
 import { mkdirSync } from 'node:fs';
 import type { Page } from 'playwright-core';
@@ -16,6 +17,7 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const mockupArg = process.argv.find((a) => a.startsWith('--mockup'));
 const withMockup = !!mockupArg;
 const views = process.argv.includes('--views');
+const clean = process.argv.includes('--clean');
 const base = args[0] ?? 'http://localhost:5173';
 const mockupUrl = mockupArg?.split('=')[1] ?? `${base}/docs/mockup/hollowmere-mockup.html`;
 const out = args[1] ?? 'shots';
@@ -55,6 +57,7 @@ async function open(page: Page, url: string): Promise<string[]> {
   });
   await page.goto(url);
   await page.waitForFunction(() => !!(window as Hook).hollowmere, null, { timeout: 30000 });
+  if (clean) await page.addStyleTag({ content: '.hud,.placard,#mode,.actions,.altbtns,#loader,.dev-dock,.dev-badge{display:none!important}' });
   await page.waitForTimeout(2500);
   return errors;
 }

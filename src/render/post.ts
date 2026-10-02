@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { Pass } from 'three/examples/jsm/postprocessing/Pass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-
-/** Bloom tuned against the emissive levels in world/materials.ts. */
-const BLOOM = { strength: 0.7, radius: 0.5, threshold: 1.0 };
+import { LAYER, sceneDepth } from './layers';
+import { displayRGB, look, onLook } from './look';
 
 /**
- * Exposure, ACES, a mild S-curve, cool-shadow/warm-highlight split tone, the phase effect,
- * vignette, grain and edge chromatic aberration. Does its own sRGB conversion.
+ * Exposure, ACES, an S-curve, saturation, cool-shadow/warm-highlight split tone, the phase
+ * effect, vignette, a lifted black, grain and edge chromatic aberration. Values come from
+ * data/look.json (grade). Does its own sRGB conversion.
  */
 const GradeShader = {
   name: 'GradeShader',
@@ -17,16 +17,24 @@ const GradeShader = {
     tDiffuse: { value: null },
     uTime: { value: 0 },
     uRes: { value: new THREE.Vector2() },
-    uExposure: { value: 1.35 },
     uPhase: { value: 0 },
-    uGrain: { value: 1 },
+    uExposure: { value: 1 },
+    uContrast: { value: 0 },
+    uSaturation: { value: 1 },
+    uShadows: { value: new THREE.Vector3(1, 1, 1) },
+    uHighlights: { value: new THREE.Vector3(1, 1, 1) },
+    uBlacks: { value: new THREE.Vector3() },
+    uVignette: { value: 0 },
+    uGrain: { value: 0 },
+    uAberration: { value: 0 },
   },
   vertexShader: /* glsl */ `
     varying vec2 vUv;
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */ `
     uniform sampler2D tDiffuse;
-    uniform float uTime, uExposure, uPhase, uGrain;
+    uniform float uTime, uPhase, uExposure, uContrast, uSaturation, uVignette, uGrain, uAberration;
+    uniform vec3 uShadows, uHighlights, uBlacks;
     uniform vec2 uRes;
     varying vec2 vUv;
     vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
@@ -36,20 +44,59 @@ const GradeShader = {
       uv += vec2(sin(uv.y * 38.0 + uTime * 6.0), cos(uv.x * 31.0 + uTime * 5.0)) * 0.006 * uPhase;
       vec2 d = uv - 0.5;
       float r2 = dot(d, d);
-      float ca = 0.0016 + 0.006 * uPhase;
+      float ca = uAberration + 0.006 * uPhase;
       vec3 c = vec3(texture2D(tDiffuse, uv + d * ca).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - d * ca).b);
       c *= uExposure;
       c = aces(c);
-      c = mix(c, c * c * (3.0 - 2.0 * c), 0.3);
+      c = mix(c, c * c * (3.0 - 2.0 * c), uContrast);
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-      c = mix(c * vec3(0.9, 0.97, 1.12), c * vec3(1.06, 1.0, 0.9), smoothstep(0.08, 0.6, l));
+      c = max(mix(vec3(l), c, uSaturation), 0.0);
+      c = mix(c * uShadows, c * uHighlights, smoothstep(0.08, 0.6, l));
       c += vec3(1.0, 0.72, 0.42) * uPhase * 0.18 * (1.0 - r2 * 2.0);
-      c *= 1.0 - 0.72 * smoothstep(0.1, 0.62, r2);
+      c *= 1.0 - uVignette * smoothstep(0.1, 0.62, r2);
       c = pow(max(c, 0.0), vec3(1.0 / 2.2));
-      c += (hash(uv * uRes + fract(uTime) * 91.7) - 0.5) * 0.04 * uGrain;
+      // Black lifts to a deep blue-grey after the vignette, so even the corners keep the night's colour.
+      c = uBlacks + c * (1.0 - uBlacks);
+      c += (hash(uv * uRes + fract(uTime) * 91.7) - 0.5) * uGrain;
       gl_FragColor = vec4(c, 1.0);
     }`,
 };
+
+/**
+ * Draws the scene into the HDR target in two goes: layer 0 (everything that writes depth, and the
+ * sky), then the late layers (see render/layers.ts). three resolves the MSAA colour and depth at
+ * the end of each render, so by the second the depth texture holds the opaque scene for the mist.
+ * (Without MSAA the depth texture would be attached to the target it's read in; the low tier in M6
+ * will need a copy.)
+ */
+class ScenePass extends Pass {
+  constructor(
+    private scene: THREE.Scene,
+    private camera: THREE.PerspectiveCamera,
+  ) {
+    super();
+    this.needsSwap = false;
+  }
+
+  render(renderer: THREE.WebGLRenderer, _write: THREE.WebGLRenderTarget, read: THREE.WebGLRenderTarget) {
+    const { camera, scene } = this;
+    const autoClear = renderer.autoClear;
+    const mask = camera.layers.mask;
+    renderer.autoClear = false;
+    renderer.setRenderTarget(read);
+    renderer.clear();
+    camera.layers.set(0);
+    renderer.render(scene, camera);
+    sceneDepth.tDepth.value = read.depthTexture;
+    sceneDepth.uNear.value = camera.near;
+    sceneDepth.uFar.value = camera.far;
+    camera.layers.set(LAYER.late);
+    camera.layers.enable(LAYER.mist);
+    renderer.render(scene, camera);
+    camera.layers.mask = mask;
+    renderer.autoClear = autoClear;
+  }
+}
 
 /**
  * Make three's current bloom behave like the r147 one the mockup was tuned with. The bloom and
@@ -87,7 +134,6 @@ function matchMockupBloom(bloom: UnrealBloomPass) {
     old.dispose();
     return m;
   });
-  bloom.strength /= 3;
   bloom.blendMaterial.blending = THREE.CustomBlending;
   bloom.blendMaterial.blendSrc = THREE.OneFactor;
   bloom.blendMaterial.blendDst = THREE.OneFactor;
@@ -99,19 +145,36 @@ export interface Post {
   setSize(width: number, height: number, pixelRatio: number): void;
 }
 
-/** HDR half-float target with 4x MSAA → bloom → grade. */
-export function makePost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, reduceMotion: boolean): Post {
+/** HDR half-float target with 4x MSAA and a depth texture → scene in two goes → bloom → grade. */
+export function makePost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, reduceMotion: boolean): Post {
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-  const rt = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, samples: 4 });
+  const rt = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, samples: 4, depthTexture: new THREE.DepthTexture(size.x, size.y) });
   const composer = new EffectComposer(renderer, rt);
-  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new ScenePass(scene, camera));
   // Full resolution: the mockup's bloom was tuned at the size EffectComposer gives its passes.
-  const bloom = new UnrealBloomPass(size.clone(), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
+  const bloom = new UnrealBloomPass(size.clone(), look.bloom.strength, look.bloom.radius, look.bloom.threshold);
   matchMockupBloom(bloom);
   composer.addPass(bloom);
   const grade = new ShaderPass(GradeShader);
-  grade.uniforms.uGrain.value = reduceMotion ? 0 : 1;
   composer.addPass(grade);
+  onLook(() => {
+    const g = look.grade;
+    const u = grade.uniforms;
+    u.uExposure.value = g.exposure;
+    u.uContrast.value = g.contrast;
+    u.uSaturation.value = g.saturation;
+    u.uShadows.value.set(...g.shadows);
+    u.uHighlights.value.set(...g.highlights);
+    displayRGB(g.blacks, u.uBlacks.value);
+    u.uVignette.value = g.vignette;
+    // No grain under reduced motion.
+    u.uGrain.value = reduceMotion ? 0 : g.grain;
+    u.uAberration.value = g.aberration;
+    // matchMockupBloom's composite adds once at strength, where three would add 3x.
+    bloom.strength = look.bloom.strength / 3;
+    bloom.radius = look.bloom.radius;
+    bloom.threshold = look.bloom.threshold;
+  });
   return {
     bloom,
     render(dt, time, phase) {

@@ -93,9 +93,9 @@
       "kind": "glass",
       "tile": 1,
       "priority": 1,
-      "roughness": 0.3,
+      "roughness": 0.6,
       "source": "synth",
-      "hash": "3fec344f194b9944",
+      "hash": "ef8e076d59392e94",
       "maps": {
         "albedo": {
           "srgb": true,

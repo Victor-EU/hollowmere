@@ -4,3 +4,5 @@ assets/raw/
 .DS_Store
 *.local
 shots/
+# Mood-board paintings: references only, provenance unknown (design doc §19).
+reference/

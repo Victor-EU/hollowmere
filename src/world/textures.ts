@@ -241,6 +241,56 @@ function pumpkinTex(emissive: boolean) {
   );
 }
 
+/**
+ * Tileable ripple slopes for the lake: a sum of wave trains whose wave vectors fit the tile, so it
+ * wraps exactly. Slopes (dh/dx, dh/dz) in RG with 0.5 as flat, so mipmaps average them properly
+ * and far water calms into a mirror.
+ */
+function makeRipples(size = 256) {
+  const R = rng(97);
+  const waves = Array.from({ length: 36 }, () => {
+    // Integer wave numbers; most of the height in the long waves, from every direction.
+    const k = 2 + Math.pow(R(), 1.7) * 26;
+    const a = R() * Math.PI * 2;
+    const m = Math.round(Math.cos(a) * k);
+    const n = Math.round(Math.sin(a) * k);
+    const len = Math.max(1, Math.hypot(m, n));
+    return { m, n, amp: Math.pow(len, -1.5), ph: R() * Math.PI * 2 };
+  });
+  const sx = new Float32Array(size * size);
+  const sz = new Float32Array(size * size);
+  let max = 0;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let dx = 0;
+      let dz = 0;
+      for (const w of waves) {
+        const c = w.amp * 2 * Math.PI * Math.cos((2 * Math.PI * (w.m * x + w.n * y)) / size + w.ph);
+        dx += c * w.m;
+        dz += c * w.n;
+      }
+      const i = y * size + x;
+      sx[i] = dx;
+      sz[i] = dz;
+      max = Math.max(max, Math.abs(dx), Math.abs(dz));
+    }
+  }
+  const data = new Uint8Array(size * size * 4);
+  for (let i = 0; i < size * size; i++) {
+    data[i * 4] = Math.round(127.5 + (127.5 * sx[i]) / max);
+    data[i * 4 + 1] = Math.round(127.5 + (127.5 * sz[i]) / max);
+    data[i * 4 + 3] = 255;
+  }
+  const t = new THREE.DataTexture(data, size, size);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.generateMipmaps = true;
+  t.anisotropy = anisotropy;
+  t.needsUpdate = true;
+  return t;
+}
+
 export function makeTextures(maxAnisotropy: number) {
   anisotropy = maxAnisotropy;
   return {
@@ -252,6 +302,7 @@ export function makeTextures(maxAnisotropy: number) {
     web: makeWeb(),
     pumpkin: pumpkinTex(false),
     pumpkinGlow: pumpkinTex(true),
+    ripples: makeRipples(),
   };
 }
 

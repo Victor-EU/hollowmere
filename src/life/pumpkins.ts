@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { WorldData } from '../data';
+import { look, onLook } from '../render/look';
 import { range, rng } from '../world/math';
-import { EMISSIVE } from '../world/materials';
 import type { Textures } from '../world/textures';
 import { Pool } from './sprites';
 import type { LifeContext, Living } from './types';
@@ -57,9 +57,9 @@ export function makePumpkins(world: WorldData, tex: Textures, viaduct: { a: THRE
     map: tex.pumpkin,
     emissiveMap: tex.pumpkinGlow,
     emissive: new THREE.Color('#ffffff'),
-    emissiveIntensity: EMISSIVE.pumpkinFace,
     roughness: 0.55,
   });
+  onLook(() => (mat.emissiveIntensity = look.emissive.pumpkinFace));
   const body = new THREE.InstancedMesh(pumpkinGeometry(), mat, N);
   const stemG = new THREE.CylinderGeometry(0.08, 0.13, 0.42, 6);
   stemG.translate(0, 0.93, 0);

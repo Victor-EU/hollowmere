@@ -1,7 +1,8 @@
 import worldJson from '../../data/world.json';
 import routeJson from '../../data/route.json';
 import zonesJson from '../../data/zones.json';
-import type { RouteData, WorldData, Zone, ZonesData } from './types';
+import lookJson from '../../data/look.json';
+import type { LookData, RouteData, WorldData, Zone, ZonesData } from './types';
 
 export type * from './types';
 
@@ -34,3 +35,5 @@ function checkZones(data: ZonesData): ZonesData {
 export const world = worldJson as unknown as WorldData;
 export const route = checkRoute(routeJson as unknown as RouteData);
 export const zones = checkZones(zonesJson as unknown as ZonesData).zones;
+/** Live: the dev look panel edits it in place (see src/render/look.ts). */
+export const look = lookJson as unknown as LookData;

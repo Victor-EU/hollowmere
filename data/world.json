@@ -1,5 +1,5 @@
 {
-  "$comment": "Metres, y up, lake surface at y = 0. North is -z. Perimeter angles are degrees with x = r cos(a), z = r sin(a). Values come from the mockup (docs/mockup/hollowmere-mockup.html); see docs/design.md section 5.",
+  "$comment": "Where things are. Metres, y up, lake surface at y = 0. North is -z. Perimeter angles are degrees with x = r cos(a), z = r sin(a). Values come from the mockup (docs/mockup/hollowmere-mockup.html); see docs/design.md section 5. How things look (light, fog, grade, water, mist) is in look.json.",
   "plateau": 40,
   "terrain": { "size": 3000, "segments": 300 },
   "cliff": { "center": [0, 0], "topRadius": 82, "bottomRadius": 106, "top": 40, "bottom": -26, "seed": 3.3 },
@@ -60,8 +60,7 @@
     { "at": [-49, 96, 10], "size": 12, "yaw": -0.6, "roll": 0.2 }
   ],
   "lights": {
-    "hemisphere": { "sky": "#4b5c85", "ground": "#1c140e", "intensity": 1.73 },
-    "moon": { "color": "#a9bde2", "intensity": 3.6, "shadowExtent": 230, "shadowMap": 2048 },
+    "moonShadow": { "extent": 230, "mapSize": 2048 },
     "warm": [
       { "name": "gate", "at": [172, 48, 76], "intensity": 67, "distance": 95, "flicker": 0.1 },
       { "name": "viaduct", "at": [105, 52, 40], "intensity": 45, "distance": 60 },
@@ -69,8 +68,7 @@
       { "name": "hall", "at": [-5, 54, 44], "intensity": 41.5, "distance": 52, "color": "#ffb066", "flicker": 0.08 }
     ]
   },
-  "fog": { "color": "#2a3349", "density": 0.00125 },
-  "moon": { "direction": [0.777, 0.4, -0.629], "distance": 3600, "size": 360 },
+  "moon": { "direction": [0.777, 0.4, -0.629], "distance": 3600, "size": 540 },
   "castleCentre": [5, 70, 5],
   "bounds": { "softRadius": 620, "fogEnd": 720, "ceiling": 340 },
   "life": {
@@ -98,8 +96,8 @@
     "wisps": { "count": 12, "min": [-260, 2, 80], "max": [-60, 6, 260], "radius": [8, 30], "speed": [0.05, 0.15] },
     "wyrm": { "center": [6, 146, -20], "radius": 56, "segments": 46 },
     "mist": [
-      { "ring": [118, 200], "y": [4, 20], "count": 24, "size": [70, 140], "opacity": [0.3, 0.5] },
-      { "min": [-420, 3, 60], "max": [-40, 10, 360], "count": 14, "size": [90, 170], "opacity": [0.2, 0.38] },
+      { "ring": [112, 200], "y": [2, 9], "count": 28, "size": [70, 140], "aspect": 0.3, "opacity": [0.3, 0.5] },
+      { "min": [-420, 2, 60], "max": [-40, 8, 360], "count": 16, "size": [90, 170], "aspect": 0.25, "opacity": [0.2, 0.38] },
       { "ring": [20, 70], "y": [64, 92], "count": 10, "size": [36, 70], "opacity": [0.12, 0.24], "tint": 1.2 },
       { "min": [100, 8, 20], "max": [220, 26, 140], "count": 8, "size": [60, 120], "opacity": [0.25, 0.42] }
     ]

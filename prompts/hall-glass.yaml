@@ -5,7 +5,7 @@ kind: glass
 tile: 1
 seamless: false
 priority: 1
-roughness: 0.3
+roughness: 0.6
 
 generate:
   size: 1024x1536
