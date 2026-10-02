@@ -4,6 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Drift through a haunted castle above a moonlit lake as a ghost.",
+  "license": "MIT",
+  "homepage": "https://victor-eu.github.io/hollowmere/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Victor-EU/hollowmere.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build",
@@ -15,7 +21,8 @@
     "generate": "node tools/generate.ts",
     "process": "node tools/process.ts",
     "stems": "node tools/stems.ts",
-    "loadtime": "node tools/loadtime.ts"
+    "loadtime": "node tools/loadtime.ts",
+    "a11y": "node tools/a11y.ts"
   },
   "dependencies": {
     "three": "0.186.1"
@@ -23,6 +30,7 @@
   "devDependencies": {
     "@types/node": "24.19.1",
     "@types/three": "0.186.0",
+    "axe-core": "4.13.0",
     "ktx2-encoder": "0.6.0",
     "playwright-core": "1.63.0",
     "sharp": "0.35.5",

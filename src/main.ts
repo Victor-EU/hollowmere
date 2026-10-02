@@ -161,6 +161,7 @@ async function boot() {
     toggleAuto,
     toggleSound,
     toggleHelp: () => hud.toggleHelp(),
+    dismiss: () => hud.closeHelp(),
     // Browsers need a gesture before audio; if sound was on last time, any gesture brings it back.
     gesture: () => {
       if (audio.wantsSound && !audio.on && !soundBusy) audio.resumeFromGesture().then(() => hud.setSound(audio.on));
@@ -296,9 +297,9 @@ async function boot() {
     frame(t);
   });
 
-  // A small hook for tinkering in the console, screenshot tests and `npm run validate`.
+  // A small hook for tinkering in the console, screenshot tests, `npm run validate` and `npm run a11y`.
   Object.assign(window, {
-    hollowmere: { flight, scene, renderer, post, audio, look, lookChanged, quality, textures: lib, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
+    hollowmere: { flight, scene, renderer, post, audio, look, lookChanged, quality, reduceMotion, textures: lib, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
   });
 }
 

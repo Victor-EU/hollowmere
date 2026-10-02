@@ -1,15 +1,51 @@
 # Hollowmere
 
-You are a ghost drifting through a haunted castle on a cliff above a moonlit lake. It opens on autofly; take over at any time, fly through walls, and let go to drift back onto the lantern route.
+![A castle on a cliff above a moonlit lake, its lit windows reflected in the water, a dragon breathing fire over the spires and a small ghost drifting toward it](public/social.jpg)
 
-The design is in [docs/design.md](docs/design.md). The original single-file block-out is in [docs/mockup/](docs/mockup/hollowmere-mockup.html) and is the visual reference for milestone M0.
+You are a ghost drifting through a haunted castle on a cliff above a moonlit lake. It opens on autofly, a slow flight along a route through the best views; take over at any time, fly through walls, and let go to drift back onto the lantern route. It's a mood piece for Halloween night, with no goals and nothing to lose: leave it running on a second screen and come back to fly through the great hall.
+
+**[Fly it](https://victor-eu.github.io/hollowmere/)** in a recent Chrome, Edge, Firefox or Safari, on a computer or a phone. Turn the sound on.
+
+## Flying
+
+| | Keyboard and mouse | Touch |
+|---|---|---|
+| Look around | Drag | Drag on the right side |
+| Drift where you look | W A S D or the arrow keys | The left stick, which appears where you press |
+| Rise and sink | Space or E, Q or C | ▲ ▼ |
+| Glide faster | Shift | |
+| Camera closer or farther | Wheel | Pinch |
+| Autofly on or off | F | Autofly |
+| Sound on or off | M | Sound |
+| The list of controls | H, and Esc to close it | Controls |
+
+Autofly takes over again 12 seconds after you let go. Links can start you somewhere: `?at=hall` (or `lake`, `viaduct`, `gate`, `keep`), and `?autofly=0` starts in free flight.
+
+## The place
+
+The family who built the castle on the cliff kept a lamp in every window, so the boats on the Mere could find the shore at night, and when the last of them died the lamps went on burning anyway. The Hollow Hall is lit by a hundred and fifty candles nobody lights. The Lantern Warden, roots and iron with a lantern for a head, stands at the Warden's Gate and turns to watch whatever drifts up the Candle Stair. Something with wings has made its roost on Wyrmspire, the highest tower, and breathes fire over the keep when it circles. The ghosts who wander the grounds don't remember who they were. Neither do you.
+
+## Accessibility
+
+- **Keyboard.** Everything works from the keyboard. Tab reaches the scene and every button, each with a visible focus ring; H opens the list of controls and Esc closes it. The touch screen's ▲ ▼ buttons can be held from a keyboard too.
+- **Screen readers.** The scene describes what autofly does and which keys fly, and a polite live region announces taking over, autofly coming back, and each named place (the pill's per-second countdown is left out, and a status has to settle for a second first, so passing through thin walls stays quiet). Sound never starts until you ask for it.
+- **Reduced motion.** With `prefers-reduced-motion`, the ghost doesn't bob, there's no film grain, the mist stops drifting, the effect of passing through stone is softer, and autofly turns more gently.
+- **Contrast.** The HUD's text holds 4.5:1 (3:1 for the big title) against whatever is drawn behind it, measured at twelve points round the route on a desktop and a phone. With `prefers-contrast: more` the glass goes solid and the secondary text brighter; Windows high-contrast mode keeps the pressed-button lamps.
+- **Flashing.** Nothing flickers faster than about 2 Hz: the lights at up to 1.6 Hz, the candles and the dragon's fire at 2.1 Hz, the pumpkins at 2.3 Hz. Measured from the frames, the most anything flashes is 2.5 times a second over a quarter of a 10° field of view, as autofly passes through the great hall's glass wall, against WCAG's limit of 3.
+- **Touch.** Buttons are at least 44 px on touch screens.
+
+It is a visual piece first: beyond the description and the place names, the world itself has no text equivalent. `npm run a11y` checks all of the above (see [Running it](#running-it)).
 
 ## Running it
+
+You need Node 24 and, for the checks and screenshots, Google Chrome.
 
 ```bash
 npm install
 npm run dev
 ```
+
+The design is in [docs/design.md](docs/design.md); the original single-file block-out is in [docs/mockup/](docs/mockup/hollowmere-mockup.html).
 
 | Script | What it does |
 |---|---|
@@ -18,6 +54,7 @@ npm run dev
 | `npm run typecheck` | `tsc` over `src/` and `tools/` |
 | `npm run validate [-- <devUrl>] [--strict] [--quality=<tier>]` | Checks the data files and every geometry in headless Chrome, flies the route and measures draw calls and triangles against the budgets, then turns sound on and checks every music stem decodes and plays. Starts its own dev server unless given a URL. Runs on the high tier unless told otherwise. Exits 1 on errors; `--strict` also fails on warnings and budget overruns |
 | `npm run loadtime [-- <url>] [--profile=desktop,phone] [--runs=3]` | Builds the site, serves it as a static host would, and times cold visits behind a throttled network (and, for the phone, a 4× slower CPU) until the first frame; see [Loading and quality](#loading-and-quality). Exits 1 over budget |
+| `npm run a11y [-- <url>] [--skip=<check>,...] [--seconds=20]` | Builds the site and checks it in headless Chrome against design doc §14: axe-core's WCAG 2.2 AA rules (as loaded, with the controls open, on a phone, and without WebGL), Tab order and focus rings and the keys, what the live region says, reduced motion, the HUD's text contrast against the rendered scene round the route, and flashes counted from the frames at each named point, after a 5 Hz strobe as a control. Exits 1 on any failure |
 | `npm run shots -- <url> <outDir> [--mockup[=url]] [--views] [--clean] [--quality=<tier>]` | Screenshots of six fixed route points in headless Chrome; with `--mockup`, the same points from the mockup for side-by-side checks. With `--views` (dev server only), seven fixed free-camera views of the castle instead, steadier for judging materials and geometry. `--clean` hides the HUD. The tier is pinned, high by default |
 | `npm run compare -- <reference> <screenshot> [out.png]` | A screenshot beside a reference painting, each over its palette, plus the numbers the look targets talk about; see [The look](#the-look) |
 | `npm run process [-- <id>...] [--force]` | Builds the textures the app ships (`public/assets/`) from `prompts/*.yaml`; see [Textures](#textures) |
@@ -153,7 +190,26 @@ Medians of three cold runs on an M3 MacBook; the "was" figures are the previous 
 - `src/ui/`: HUD, controls, touch input
 - `src/dev/`: stats overlay, free camera, route editor, look panel, geometry and data checks (left out of production builds, except the overlay behind `?stats`)
 - `prompts/`: one spec per texture, plus the style guide prepended to every prompt
-- `public/assets/`: the processed textures, the music stems, and their manifest
-- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), the stems (`tools/stems/` has the score, the instruments and the Ogg muxer), headless Chrome screenshots, validation, load timing and the reference comparison, and the dev-server endpoint the route editor and look panel save through
+- `public/assets/`: the processed textures, the music stems, and their manifest; `public/social.jpg` is the picture a shared link shows
+- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), the stems (`tools/stems/` has the score, the instruments and the Ogg muxer), headless Chrome screenshots, validation, the accessibility checks, load timing (both on the built site, served by `tools/static.ts`) and the reference comparison; and two Vite plugins, the dev-server endpoint the route editor and look panel save through, and `vite-site.ts`, which writes `licenses.txt` and the share tags
+- `licenses/`: third-party license texts the site ships
+- `.github/workflows/site.yml`: builds every push and pull request, and publishes `main` to GitHub Pages
 
-No analytics and no cookies. Everything comes from the same site except the fonts, from Google Fonts. The full-resolution textures stream in just after the first frame, and the music only once you turn sound on. Two local-storage keys: the sound preference, and the quality tier adaptation settled on for this GPU (dev builds also remember whether the stats overlay is open).
+## Privacy
+
+No analytics, no cookies, no accounts, and the app makes no calls to any API. Everything comes from the same site except the fonts, from Google Fonts. The full-resolution textures stream in just after the first frame, and the music only once you turn sound on. Two local-storage keys: the sound preference, and the quality tier adaptation settled on for this GPU (dev builds also remember whether the stats overlay is open).
+
+## Contributing
+
+Contributions are welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the house rules and the checks to run. Most of the world is data: the layout in `data/world.json`, the route in `data/route.json`, the sound zones in `data/zones.json` and the look in `data/look.json`, each with an editor in the dev build.
+
+## Credits and licenses
+
+By Victor Zhang, with Claude.
+
+- [three.js](https://threejs.org/) draws it (MIT), with the [Basis Universal](https://github.com/BinomialLLC/basis_universal) transcoder (Apache 2.0) and [zstddec](https://github.com/donmccurdy/zstddec) (MIT, with [Zstandard](https://github.com/facebook/zstd)'s decoder, BSD) for the compressed textures.
+- The type is [IM Fell English SC](https://fonts.google.com/specimen/IM+Fell+English+SC) by Igino Marini and [Alegreya Sans](https://fonts.google.com/specimen/Alegreya+Sans) by Juan Pablo del Peral (Huerta Tipográfica), both under the SIL Open Font License.
+- Built with [Vite](https://vite.dev/) and [TypeScript](https://www.typescriptlang.org/); textures processed with [sharp](https://sharp.pixelplumbing.com/) and [ktx2-encoder](https://github.com/gz65555/ktx2-encoder); checked in headless Chrome through [Playwright](https://playwright.dev/), with [axe-core](https://github.com/dequelabs/axe-core) for the accessibility rules. None of these ship in the site.
+- The mood-board paintings that set the look (design doc §3a) aren't included: they're references of unknown provenance.
+
+Everything here, the code, data, docs, textures and music alike, is under the [MIT License](LICENSE). Textures made with OpenAI's image API come under it too once they replace the procedural stand-ins: OpenAI's terms assign to the user whatever rights it has in what its models make, though some countries, the US among them, may not protect a model-made image by copyright at all. The third-party code keeps its own licenses, in `licenses/`, and the site ships them as `licenses.txt`, linked from the list of controls.

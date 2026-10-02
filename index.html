@@ -20,58 +20,75 @@
     />
   </head>
   <body>
-    <canvas id="scene" tabindex="0" aria-label="3D haunted castle you can fly through as a ghost"></canvas>
-
     <header class="placard" id="placard">
-      <span class="tag">3D block-out</span>
+      <span class="tag">A ghost&rsquo;s night flight</span>
       <h1>Hollowmere</h1>
       <p>A castle over a moonlit lake. You are the ghost: drag to look, take over with the keys, or let autofly drift you along the lantern route.</p>
     </header>
 
-    <div class="hud">
-      <div class="mode" id="mode" role="status" aria-live="polite">
-        <i class="dot"></i><b id="modeText">Autofly</b><span id="modeSub">Drag to look around · WASD to take over</span>
-      </div>
-      <div class="actions">
-        <button id="btnAuto" aria-pressed="true">Autofly <kbd>F</kbd></button>
-        <button id="btnSound" aria-pressed="false">Sound <kbd>M</kbd></button>
-        <button id="btnHelp" aria-expanded="false" aria-controls="help">Controls <kbd>H</kbd></button>
-      </div>
-    </div>
+    <main>
+      <!-- An application: screen readers hand its keys (WASD, arrows, Space) straight to the flight. -->
+      <canvas id="scene" tabindex="0" role="application" aria-label="Hollowmere, a haunted castle you fly through as a ghost" aria-describedby="sceneHelp"></canvas>
+      <p id="sceneHelp" class="sr-only">
+        Autofly carries you along a lantern-lit route over the lake, through the great hall and round the castle. To fly yourself, use W A S D or the
+        arrow keys, Space to rise and Q to sink; autofly takes over again after 12 seconds. F turns autofly on or off, M turns sound on or off, and H
+        lists the controls.
+      </p>
 
-    <aside id="help" hidden>
-      <h2>Flying as a ghost</h2>
-      <dl class="keys">
-        <dt>Drag</dt><dd>Look around</dd>
-        <dt>W A S D</dt><dd>Drift where you look</dd>
-        <dt>Space · E</dt><dd>Rise</dd>
-        <dt>Q · C</dt><dd>Sink</dd>
-        <dt>Shift</dt><dd>Glide faster</dd>
-        <dt>Wheel</dt><dd>Move the camera closer or farther</dd>
-        <dt>F</dt><dd>Autofly on or off</dd>
-        <dt>M</dt><dd>Sound on or off</dd>
-      </dl>
-      <dl class="taps">
-        <dt>Left stick</dt><dd>Drift where you look</dd>
-        <dt>Drag right side</dt><dd>Look around</dd>
-        <dt>▲ ▼</dt><dd>Rise and sink</dd>
-      </dl>
-      <p>Ghosts pass through walls. Autofly takes back over after 12 seconds without input.</p>
-    </aside>
-
-    <div id="stick" hidden><div id="stickKnob"></div></div>
-    <div class="altbtns" id="altbtns" hidden>
-      <button id="btnUp" aria-label="Rise">▲</button>
-      <button id="btnDown" aria-label="Sink">▼</button>
-    </div>
-
-    <div id="loader"><div><div class="t">Hollowmere</div><div class="s">Raising the castle out of the fog</div></div></div>
-    <div id="nogl" hidden>
-      <div>
-        <h2 style="font-family: var(--display); font-weight: 400">Hollowmere needs WebGL</h2>
-        <p>This browser could not start a 3D context. Try a recent Chrome, Firefox, Safari or Edge with hardware acceleration turned on.</p>
+      <div class="hud">
+        <div class="mode" id="mode">
+          <i class="dot"></i><b id="modeText">Autofly</b><span id="modeSub">Drag to look around · WASD to take over</span>
+        </div>
+        <div class="actions">
+          <button id="btnAuto" aria-pressed="true">Autofly <kbd>F</kbd></button>
+          <button id="btnSound" aria-pressed="false">Sound <kbd>M</kbd></button>
+          <button id="btnHelp" aria-expanded="false" aria-controls="help">Controls <kbd>H</kbd></button>
+        </div>
       </div>
-    </div>
+
+      <!-- What the status pill says, minus the per-second countdown, once it has settled for a moment. -->
+      <p id="announce" class="sr-only" role="status" aria-live="polite"></p>
+
+      <aside id="help" aria-labelledby="helpTitle" hidden>
+        <h2 id="helpTitle">Flying as a ghost</h2>
+        <dl class="keys">
+          <dt>Drag</dt><dd>Look around</dd>
+          <dt>W A S D</dt><dd>Drift where you look</dd>
+          <dt>Space · E</dt><dd>Rise</dd>
+          <dt>Q · C</dt><dd>Sink</dd>
+          <dt>Shift</dt><dd>Glide faster</dd>
+          <dt>Wheel</dt><dd>Move the camera closer or farther</dd>
+          <dt>F</dt><dd>Autofly on or off</dd>
+          <dt>M</dt><dd>Sound on or off</dd>
+          <dt>H</dt><dd>Show or hide this list</dd>
+          <dt>Esc</dt><dd>Hide it</dd>
+        </dl>
+        <dl class="taps">
+          <dt>Left stick</dt><dd>Drift where you look</dd>
+          <dt>Drag right side</dt><dd>Look around</dd>
+          <dt>▲ ▼</dt><dd>Rise and sink</dd>
+        </dl>
+        <p>Ghosts pass through walls. Autofly takes back over after 12 seconds without input.</p>
+        <p class="about">
+          By Victor Zhang &middot; <a href="https://github.com/Victor-EU/hollowmere">Source</a> &middot;
+          <a href="licenses.txt">Credits and licenses</a>
+        </p>
+      </aside>
+
+      <div id="stick" hidden><div id="stickKnob"></div></div>
+      <div class="altbtns" id="altbtns" hidden>
+        <button id="btnUp" aria-label="Rise">▲</button>
+        <button id="btnDown" aria-label="Sink">▼</button>
+      </div>
+
+      <div id="loader"><div><div class="t">Hollowmere</div><div class="s">Raising the castle out of the fog</div></div></div>
+      <div id="nogl" hidden>
+        <div>
+          <h2 style="font-family: var(--display); font-weight: 400">Hollowmere needs WebGL</h2>
+          <p>This browser could not start a 3D context. Try a recent Chrome, Firefox, Safari or Edge with hardware acceleration turned on.</p>
+        </div>
+      </div>
+    </main>
     <noscript>
       <p style="position: fixed; inset: 0; display: grid; place-items: center; margin: 0; color: #ebe0c8; background: #0a0d15; font-family: Georgia, serif">
         Hollowmere is a 3D flight through a haunted castle. It needs JavaScript and WebGL.

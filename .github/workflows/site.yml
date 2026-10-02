@@ -1,0 +1,53 @@
+# Typechecks and builds the site for every push and pull request, and publishes main to GitHub Pages
+# (Settings → Pages → Source: GitHub Actions). The headless-Chrome checks (validate, a11y, loadtime)
+# need a real GPU to mean much, so they run on a developer's machine rather than here.
+name: Site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - id: pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v6
+      # SITE_URL gives shared links their picture (tools/vite-site.ts).
+      - run: npm run build
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

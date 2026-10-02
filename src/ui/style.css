@@ -2,11 +2,11 @@
    Single dark look by choice (it is a night flight), so colors are set once on :root. */
 :root{
   --night:#0a0d15;
-  --glass:rgba(12,16,26,.62);
+  --glass:rgba(12,16,26,.75);
   --glass-strong:rgba(12,16,26,.84);
   --line:rgba(232,220,196,.16);
   --parchment:#ebe0c8;
-  --dim:#a39b8a;
+  --dim:#b0a896;
   --lamp:#f2a65a;
   --ghost:#cfe2ff;
   --display:"IM Fell English SC","Iowan Old Style","Palatino Linotype",Georgia,serif;
@@ -21,9 +21,22 @@ body{margin:0;background:var(--night);color:var(--parchment);font-family:var(--u
   -webkit-font-smoothing:antialiased;touch-action:none;user-select:none;-webkit-user-select:none}
 #scene{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;cursor:grab}
 #scene.dragging{cursor:grabbing}
+/* Tabbing to the scene: a ring just inside the screen's edge. */
+#scene:focus-visible{outline:2px solid var(--lamp);outline-offset:-4px}
+/* Read by screen readers, not shown. */
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 
-.placard{position:fixed;top:calc(env(safe-area-inset-top,0px) + 18px);left:20px;max-width:min(360px,calc(100vw - 40px));
-  pointer-events:none;text-shadow:0 1px 14px rgba(0,0,0,.75);transition:opacity .8s ease}
+.placard{position:fixed;z-index:1;top:calc(env(safe-area-inset-top,0px) + 18px);left:20px;max-width:min(360px,calc(100vw - 40px));
+  pointer-events:none;text-shadow:0 1px 14px rgba(0,0,0,.75);transition:opacity 1.6s ease}
+/* A feathered shade in the corner, so the title reads over the moonlit sky and the hall's lit windows (4.5:1,
+   checked by npm run a11y). It runs off the top and left edges and fades out to the right and below. */
+.placard::before{content:"";position:absolute;z-index:-1;top:calc(-18px - env(safe-area-inset-top,0px));left:-20px;right:-110px;bottom:-70px;
+  background:rgba(7,9,16,.68);pointer-events:none;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 130px),transparent),linear-gradient(to bottom,#000 calc(100% - 80px),transparent);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,#000 calc(100% - 130px),transparent),linear-gradient(to bottom,#000 calc(100% - 80px),transparent);
+  mask-composite:intersect}
+/* Faded after the first touch of the controls; still there for screen readers. */
+.placard.faded{opacity:0}
 .placard h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,4.2vw,46px);line-height:1;letter-spacing:.03em;margin:0;text-wrap:balance}
 .placard p{margin:.45rem 0 0;color:var(--dim);line-height:1.4;max-width:34ch}
 .placard .tag{font-family:var(--label);font-size:12px;letter-spacing:.14em;color:var(--lamp);margin:0 0 .4rem;display:block}
@@ -47,6 +60,8 @@ button[data-waiting]::before{content:"";width:4px;height:4px;border-radius:50%;b
 button:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
 kbd{font:500 11px/1 var(--label);padding:3px 5px;border-radius:4px;border:1px solid var(--line);color:var(--dim)}
 .touch kbd{display:none}
+/* Fingers need bigger targets than pointers. */
+.touch button{min-height:44px}
 
 #help{position:fixed;z-index:3;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 72px);width:min(320px,calc(100vw - 32px));
   background:var(--glass-strong);border:1px solid var(--line);border-radius:14px;padding:16px 18px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -55,6 +70,11 @@ kbd{font:500 11px/1 var(--label);padding:3px 5px;border-radius:4px;border:1px so
 #help dt{color:var(--parchment);white-space:nowrap}
 #help dd{margin:0;color:var(--dim)}
 #help p{margin:12px 0 0;font-size:13px;color:var(--dim);line-height:1.4}
+#help .about{padding-top:10px;border-top:1px solid var(--line)}
+#help .about a{margin:0 3px}
+#help a{color:var(--parchment);text-decoration-color:rgba(242,166,90,.6);text-underline-offset:2px}
+#help a:hover{color:#fff3e1}
+#help a:focus-visible{outline:2px solid var(--lamp);outline-offset:2px;border-radius:2px}
 .touch #help .keys,#help .taps{display:none}
 .touch #help .taps{display:grid}
 
@@ -77,3 +97,13 @@ kbd{font:500 11px/1 var(--label);padding:3px 5px;border-radius:4px;border:1px so
   .mode span{display:none}
 }
 @media (prefers-reduced-motion:reduce){#loader{transition:none}}
+/* Asked for more contrast: solid glass, brighter secondary text, firmer edges. */
+@media (prefers-contrast:more){
+  :root{--glass:var(--glass-strong);--dim:#d6cbb4;--line:rgba(232,220,196,.45)}
+  .placard p{color:var(--parchment)}
+}
+/* Windows high contrast replaces backgrounds, which would hide the pressed lamp; keep it in a system colour. */
+@media (forced-colors:active){
+  button[aria-pressed="true"]::before{forced-color-adjust:none;background:Highlight;box-shadow:none}
+  #scene:focus-visible{outline-color:Highlight}
+}

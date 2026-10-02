@@ -10,14 +10,8 @@
 // Headless Chrome draws with the real GPU, so the shader compile and the first frame are what this
 // machine's would be. The fonts come from Google over the real network, throttled the same way.
 
-import { createReadStream, existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
-import { createServer, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import { tmpdir } from 'node:os';
-import { extname, join, normalize, resolve } from 'node:path';
-import { createGzip } from 'node:zlib';
-import { build } from 'vite';
 import { launchChrome } from './chrome.ts';
+import { buildAndServe, type Site } from './static.ts';
 
 interface Profile {
   /** Download and upload in bytes per second, round trip in ms. */
@@ -46,48 +40,10 @@ for (const p of profiles) if (!PROFILES[p]) throw new Error(`no profile "${p}"; 
 const runs = Number(opt('runs') ?? 3);
 let base = args.find((a) => !a.startsWith('--'));
 
-const TYPES: Record<string, string> = {
-  '.html': 'text/html',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.svg': 'image/svg+xml',
-  '.wasm': 'application/wasm',
-  '.webp': 'image/webp',
-  '.png': 'image/png',
-  '.ktx2': 'image/ktx2',
-  '.ogg': 'audio/ogg',
-  '.aac': 'audio/aac',
-};
-/** What GitHub Pages and Cloudflare compress; KTX2, images and audio are compressed already. */
-const GZIP = new Set(['.html', '.js', '.css', '.json', '.svg', '.wasm']);
-
-function serve(dir: string): Promise<Server> {
-  const server = createServer((req, res) => {
-    let path = normalize(decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname));
-    if (path.endsWith('/')) path += 'index.html';
-    const file = join(dir, path);
-    if (!file.startsWith(dir) || !existsSync(file) || !statSync(file).isFile()) {
-      res.writeHead(404).end();
-      return;
-    }
-    const ext = extname(file);
-    const gzip = GZIP.has(ext) && /\bgzip\b/.test(String(req.headers['accept-encoding']));
-    res.writeHead(200, { 'content-type': TYPES[ext] ?? 'application/octet-stream', ...(gzip ? { 'content-encoding': 'gzip' } : { 'content-length': statSync(file).size }) });
-    const body = createReadStream(file);
-    (gzip ? body.pipe(createGzip({ level: 9 })) : body).pipe(res);
-  });
-  return new Promise((ok) => server.listen(0, '127.0.0.1', () => ok(server)));
-}
-
-let server: Server | null = null;
-let outDir: string | null = null;
+let site: Site | null = null;
 if (!base) {
-  const root = resolve(import.meta.dirname, '..');
-  outDir = mkdtempSync(join(tmpdir(), 'hollowmere-load-'));
-  await build({ root, logLevel: 'error', build: { outDir, emptyOutDir: true } });
-  server = await serve(outDir);
-  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+  site = await buildAndServe();
+  base = site.url;
 }
 
 interface Run {
@@ -143,8 +99,7 @@ try {
   }
 } finally {
   await browser.close();
-  server?.close();
-  if (outDir) rmSync(outDir, { recursive: true, force: true });
+  site?.close();
 }
 
 const s = (ms: number) => `${(ms / 1000).toFixed(2)} s`;

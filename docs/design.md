@@ -6,7 +6,7 @@
 | Author | Victor Zhang, with Claude |
 | Date | 2 October 2026 |
 | Mockup | `docs/mockup/hollowmere-mockup.html`: a single-file Three.js block-out. Open it in a browser. |
-| License | Open source (exact licenses still open, see §16) |
+| License | MIT, for the code, art and music alike (`LICENSE`) |
 
 ---
 
@@ -420,7 +420,7 @@ A dev-only `validate` step checks every geometry for NaN or Infinity before uplo
 ## 16. Open questions
 
 1. **Castle geometry source.** A procedural kit in code is easy for contributors to change through data. Blender glTF pieces give better silhouettes and UVs. A likely answer is a Blender kit placed by data.
-2. **Licenses.** Code is probably MIT. Generated art needs a check of the image provider's terms on output ownership before choosing a license (for example CC BY 4.0). Music depends on who composes it.
+2. ~~**Licenses.**~~ Decided at launch: MIT for everything, code, art and music. OpenAI's terms assign output rights to the user, so generated textures can ship under it too.
 3. **Interiors beyond the hall.** For example a crypt under the keep, or a spiral stair inside a west tower.
 4. **WebGPU renderer.** It is possible later through three's WebGPU backend. WebGL2 is the v1 baseline.
 

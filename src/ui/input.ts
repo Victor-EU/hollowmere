@@ -25,6 +25,8 @@ export interface InputHandlers {
   toggleAuto(): void;
   toggleSound(): void;
   toggleHelp(): void;
+  /** Escape: closes the controls list. */
+  dismiss(): void;
   /** Any pointer or key gesture, for starting audio. */
   gesture(): void;
 }
@@ -51,6 +53,7 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
     if (e.code === 'KeyF') on.toggleAuto();
     if (e.code === 'KeyM') on.toggleSound();
     if (e.code === 'KeyH') on.toggleHelp();
+    if (e.code === 'Escape') on.dismiss();
     // After the toggles, so pressing M doesn't both resume and then mute.
     on.gesture();
   });
@@ -137,7 +140,14 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
         on.gesture();
         up = v;
       });
-      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) {
+      // Held from the keyboard too, for anyone tabbing to them.
+      el.addEventListener('keydown', (e) => {
+        if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) {
+          e.preventDefault();
+          up = v;
+        }
+      });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave', 'keyup', 'blur']) {
         el.addEventListener(ev, () => {
           if (up === v) up = 0;
         });
