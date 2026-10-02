@@ -120,7 +120,7 @@ export function makeStats(host: DevHost, parent: HTMLElement, extra: () => strin
   function render() {
     const info = renderer.info;
     const { flight } = host;
-    const { dpr, adapted } = host.quality();
+    const q = host.quality();
     const A = flight.auto;
     const buf = renderer.domElement;
     const over = (v: number, b: number) => (v > b ? ' class="over"' : '');
@@ -129,7 +129,8 @@ export function makeStats(host: DevHost, parent: HTMLElement, extra: () => strin
       `<b>${Math.round(frame.fps)}</b> fps · ${f1(frame.ms)} ms · cpu ${f1(frame.cpu)} · gpu ${frame.gpu == null ? 'n/a' : f1(frame.gpu)}`,
       `draws <span${over(frame.calls, BUDGET.calls)}>${frame.calls}</span> / ${BUDGET.calls} · tris <span${over(frame.triangles, BUDGET.triangles)}>${fmt(frame.triangles)}</span> / 1.5M`,
       `points ${fmt(frame.points)} · geoms ${info.memory.geometries} · tex ${info.memory.textures} · progs ${progs}`,
-      `buffer ${buf.width}×${buf.height} @${dpr.toFixed(2)}${adapted ? ` (lowered ${adapted}×)` : ''}`,
+      `${q.name}${q.pinned ? ' (pinned)' : ''} · buffer ${buf.width}×${buf.height} @${q.dpr.toFixed(2)} · ${(q.streamed / 1048576).toFixed(1)} MB streamed`,
+      q.log.length ? `<span class="dim">${q.log.at(-1)}</span>` : '',
       `ghost ${f1(flight.pos.x)} ${f1(flight.pos.y)} ${f1(flight.pos.z)} · ${f1(flight.vel.length())} m/s`,
       `autofly ${A.enabled ? (A.override ? `waiting ${flight.returnsIn} s` : 'on') : 'off'} · w ${A.w.toFixed(2)} · t ${A.t.toFixed(3)} (wp ${(A.t * host.route.count).toFixed(1)})`,
       `${flight.where ? `in ${flight.where} · ` : ''}zone ${host.zoneLabel() ?? '—'}`,

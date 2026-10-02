@@ -23,8 +23,8 @@ export interface DevHost {
   colliders: Colliders;
   input: Input;
   hud: Hud;
-  /** Current pixel ratio and how many times the adaptive loop has lowered it. */
-  quality(): { dpr: number; adapted: number };
+  /** The quality tier, its pixel ratio, what changed it lately, and the KTX2 bytes streamed so far. */
+  quality(): { dpr: number; name: string; pinned: boolean; log: readonly string[]; streamed: number };
   zoneLabel(): string | null;
 }
 

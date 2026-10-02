@@ -25,6 +25,8 @@ export function makeLights(
   moonDir: THREE.Vector3,
   boathouse: THREE.Vector3,
   lanternSpots: THREE.Vector3[],
+  /** The quality tier's cap on the moon's map. */
+  maxShadowMap: number,
 ): Lights {
   const L = world.lights;
   const group = new THREE.Group();
@@ -57,7 +59,8 @@ export function makeLights(
   moon.castShadow = true;
   const e = L.moonShadow.extent;
   Object.assign(moon.shadow.camera, { left: -e, right: e, top: e, bottom: -e, near: 100, far: 1100 });
-  moon.shadow.mapSize.set(L.moonShadow.mapSize, L.moonShadow.mapSize);
+  const mapSize = Math.min(L.moonShadow.mapSize, maxShadowMap);
+  moon.shadow.mapSize.set(mapSize, mapSize);
   // Drawn once: the world is static (render/shadows.ts).
   moon.shadow.autoUpdate = false;
   moon.shadow.needsUpdate = true;

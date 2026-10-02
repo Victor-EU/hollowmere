@@ -1,13 +1,14 @@
 // Screenshots in headless Chrome, for parity and regression checks.
 //
-//   node tools/shots.ts [baseUrl] [outDir] [--mockup[=url]] [--views] [--clean]
+//   node tools/shots.ts [baseUrl] [outDir] [--mockup[=url]] [--views] [--clean] [--quality=high|medium|low]
 //
 // By default it jumps the ghost to six fixed route points. With --views it instead parks the dev
 // free camera at fixed viewpoints of the castle (dev server only), which is steadier for judging
 // materials and geometry: only the creatures move. With --mockup it also shoots the mockup
 // (default docs/mockup/hollowmere-mockup.html on the same server) at the same route points,
 // writing <point>-port.png and <point>-mockup.png side by side. --clean hides the HUD, for
-// comparing against a reference painting with tools/compare.ts.
+// comparing against a reference painting with tools/compare.ts. The quality tier is pinned (high
+// unless --quality says otherwise), so a slow moment can't change it mid-run.
 
 import { mkdirSync } from 'node:fs';
 import type { Page } from 'playwright-core';
@@ -18,6 +19,7 @@ const mockupArg = process.argv.find((a) => a.startsWith('--mockup'));
 const withMockup = !!mockupArg;
 const views = process.argv.includes('--views');
 const clean = process.argv.includes('--clean');
+const quality = process.argv.find((a) => a.startsWith('--quality='))?.split('=')[1] ?? 'high';
 const base = args[0] ?? 'http://localhost:5173';
 const mockupUrl = mockupArg?.split('=')[1] ?? `${base}/docs/mockup/hollowmere-mockup.html`;
 const out = args[1] ?? 'shots';
@@ -89,9 +91,10 @@ mkdirSync(out, { recursive: true });
 const browser = await launchChrome();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
 // A fresh session each time: the dev tools remember the free camera per tab.
-if (views) await shootViews(await context.newPage(), `${base}/`);
+const app = `${base}/?quality=${quality}`;
+if (views) await shootViews(await context.newPage(), app);
 else {
-  await shootPoints(await context.newPage(), `${base}/`, 'port');
+  await shootPoints(await context.newPage(), app, 'port');
   if (withMockup) await shootPoints(await context.newPage(), mockupUrl, 'mockup');
 }
 await browser.close();

@@ -18,7 +18,6 @@ function preferredFormat(): Format {
  * fetched as AAC instead.
  */
 export class StemLibrary {
-  private readonly ctx: BaseAudioContext;
   private readonly base: URL;
   private readonly stems: Promise<Record<string, ManifestStem>>;
   private readonly bytes = new Map<string, Promise<ArrayBuffer>>();
@@ -27,10 +26,24 @@ export class StemLibrary {
   format: Format = preferredFormat();
   /** Files that failed, for the status readout. */
   readonly failed: string[] = [];
+  /** Decodes at a lower sample rate, when asked for one. */
+  private readonly decoder: BaseAudioContext;
 
-  constructor(ctx: BaseAudioContext, base: URL) {
-    this.ctx = ctx;
+  /**
+   * `decodeRate` below the context's rate decodes the stems at that rate instead. A decoded
+   * minute and a half of mono at 48 kHz is 19 MB, and the mix holds up to three; at 24 kHz the
+   * music box loses only the shimmer above 12 kHz, and the choir nothing.
+   */
+  constructor(ctx: BaseAudioContext, base: URL, decodeRate?: number) {
     this.base = base;
+    this.decoder = ctx;
+    if (decodeRate && decodeRate < ctx.sampleRate) {
+      try {
+        this.decoder = new OfflineAudioContext(1, 1, decodeRate);
+      } catch {
+        // Some browsers only decode at the hardware rate; full size it is.
+      }
+    }
     this.stems = fetch(new URL('manifest.json', base))
       .then((r) => (r.ok ? (r.json() as Promise<Manifest>) : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((m) => m.stems ?? {})
@@ -38,6 +51,11 @@ export class StemLibrary {
         console.warn(`audio: no stems (${err.message}); the synth layers play instead`);
         return {};
       });
+  }
+
+  /** The sample rate stems decode at. */
+  get rate(): number {
+    return this.decoder.sampleRate;
   }
 
   /** The stem that replaces a layer, or null. */
@@ -74,7 +92,7 @@ export class StemLibrary {
     const file = stem.variants[i][format].file;
     try {
       // decodeAudioData detaches what it's given, so hand it a copy and keep the original.
-      return await this.ctx.decodeAudioData((await this.fetch(file)).slice(0));
+      return await this.decoder.decodeAudioData((await this.fetch(file)).slice(0));
     } catch (err) {
       this.failed.push(file);
       if (format === 'opus') {

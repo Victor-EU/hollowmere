@@ -5,13 +5,16 @@
 // For each prompts/<id>.yaml: take its source (the procedural stand-in, or the generated candidate
 // named by `source:`), check that it tiles, derive normal and emissive maps where it has none, and
 // encode every map at every tier: ETC1S for albedo, UASTC for normals and emissive masks
-// (design doc §11). Assets whose spec, source and tools haven't changed are skipped.
+// (design doc §11). Each map also gets a small WebP preview, a quarter of the mobile tier's size,
+// which the app draws its first frame with while the KTX2 files stream in (§12). Assets whose spec,
+// source and tools haven't changed are skipped.
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { emissiveFromAlbedo, heightFromLuminance } from './tex/derive.ts';
-import { halve, normalFromHeight, readRgb, seamRatio, writeHeightPng, writePng, type Img } from './tex/image.ts';
+import sharp from 'sharp';
+import { halve, normalFromHeight, readRgb, seamRatio, toRGBA8, writeHeightPng, writePng, type Img } from './tex/image.ts';
 import { encodeKtx2 } from './tex/ktx2.ts';
 import type { Manifest, ManifestTexture, TierFile } from '../src/data/manifest.ts';
 import { OUT, RAW, ROOT, TIERS, readSpecs, tierSize, type AssetSpec, type MapName, type Tier } from './tex/spec.ts';
@@ -105,7 +108,23 @@ async function loadSource(spec: AssetSpec): Promise<Maps> {
   return maps;
 }
 
-async function processAsset(spec: AssetSpec, hash: string): Promise<ManifestTexture> {
+/** Previews are a quarter of the mobile tier, and no smaller than 32 px. */
+const PREVIEW = 4;
+
+async function writePreview(path: string, img: Img, srgb: boolean): Promise<number> {
+  const out = await sharp(toRGBA8(img, srgb), { raw: { width: img.w, height: img.h, channels: 4 } })
+    .removeAlpha()
+    .webp({ quality: 82, effort: 6 })
+    .toBuffer();
+  writeFileSync(path, out);
+  return out.length;
+}
+
+/**
+ * Encode every map of an asset. With `keep` (the manifest entry from a run whose KTX2 files are
+ * still current) only the previews are written, since the KTX2 encode is the slow part.
+ */
+async function processAsset(spec: AssetSpec, hash: string, keep?: ManifestTexture): Promise<ManifestTexture> {
   const t0 = performance.now();
   const src = await loadSource(spec);
   if (spec.seamless) {
@@ -133,6 +152,19 @@ async function processAsset(spec: AssetSpec, hash: string): Promise<ManifestText
       full = src.height ?? heightFromLuminance(src.albedo, spec.tile, m.fromLuminance ?? 0.03);
     }
     const srgb = name !== 'normal';
+    const small = tierSize(m.tiers.mobile);
+    const pw = Math.max(32, small.w / PREVIEW);
+    const ph = Math.max(32, small.h / PREVIEW);
+    let pimg = shrink(full, pw, ph, wrap);
+    if (name === 'normal') pimg = normalFromHeight(pimg, spec.tile / pw, m.strength ?? 1, wrap);
+    const pfile = `tex/${spec.id}.${name}.${pw === ph ? pw : `${pw}x${ph}`}.webp`;
+    const preview: TierFile = { file: pfile, width: pw, height: ph, bytes: await writePreview(join(OUT, pfile), pimg, srgb) };
+    sizes.push(`${name}@preview ${(preview.bytes / 1024).toFixed(0)}K`);
+    const kept = keep?.maps[name];
+    if (kept) {
+      entry.maps[name] = { srgb, preview, tiers: kept.tiers };
+      continue;
+    }
     const tiers = {} as Record<Tier, TierFile>;
     for (const tier of TIERS) {
       const { w, h } = tierSize(m.tiers[tier]);
@@ -144,7 +176,7 @@ async function processAsset(spec: AssetSpec, hash: string): Promise<ManifestText
       tiers[tier] = { file, width: w, height: h, bytes: data.length };
       sizes.push(`${name}@${tier} ${(data.length / 1024).toFixed(0)}K`);
     }
-    entry.maps[name] = { srgb, tiers };
+    entry.maps[name] = { srgb, preview, tiers };
   }
   console.log(`${spec.id}: ${sizes.join(', ')} (${((performance.now() - t0) / 1000).toFixed(1)} s)`);
   return entry;
@@ -165,20 +197,27 @@ for (const spec of specs) {
   const hash = hashOf(spec);
   const old = manifest.textures[spec.id];
   const intact = old && Object.values(old.maps).every((m) => TIERS.every((t) => existsSync(join(OUT, m!.tiers[t].file))));
-  if (!force && old?.hash === hash && intact) {
+  const previews = old && Object.values(old.maps).every((m) => m!.preview && existsSync(join(OUT, m!.preview.file)));
+  const current = !force && old?.hash === hash && intact;
+  if (current && previews) {
     console.log(`${spec.id}: up to date`);
     continue;
   }
-  manifest.textures[spec.id] = await processAsset(spec, hash);
+  manifest.textures[spec.id] = await processAsset(spec, hash, current ? old : undefined);
   // Save as we go, so an interrupted run keeps what it finished.
   writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
 
 // Drop files nothing refers to any more.
-const used = new Set(Object.values(manifest.textures).flatMap((t) => Object.values(t.maps).flatMap((m) => TIERS.map((tier) => m!.tiers[tier].file))));
+const used = new Set(
+  Object.values(manifest.textures).flatMap((t) => Object.values(t.maps).flatMap((m) => [m!.preview.file, ...TIERS.map((tier) => m!.tiers[tier].file)])),
+);
 for (const f of readdirSync(TEX)) if (!used.has(`tex/${f}`)) rmSync(join(TEX, f));
 
 const total = (tier: Tier) =>
   Object.values(manifest.textures).reduce((n, t) => n + Object.values(t.maps).reduce((m, map) => m + map!.tiers[tier].bytes, 0), 0);
-console.log(`textures: desktop ${(total('desktop') / 1048576).toFixed(1)} MB, mobile ${(total('mobile') / 1048576).toFixed(1)} MB`);
+const previewBytes = Object.values(manifest.textures).reduce((n, t) => n + Object.values(t.maps).reduce((m, map) => m + map!.preview.bytes, 0), 0);
+console.log(
+  `textures: desktop ${(total('desktop') / 1048576).toFixed(1)} MB, mobile ${(total('mobile') / 1048576).toFixed(1)} MB, previews ${(previewBytes / 1024).toFixed(0)} KB`,
+);

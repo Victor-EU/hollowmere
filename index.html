@@ -7,11 +7,16 @@
     <meta name="description" content="Drift as a ghost through a haunted castle above a moonlit lake." />
     <meta name="theme-color" content="#0a0d15" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- The asset list is the first thing the app fetches; ask for it alongside the script. -->
+    <link rel="preload" href="assets/manifest.json" as="fetch" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts don't hold up the first frame: the stylesheet applies when it arrives, fallbacks until then. -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Alegreya+Sans:wght@400;500&family=Alegreya+Sans+SC:wght@500&display=swap"
+      media="print"
+      onload="this.media = 'all'"
     />
   </head>
   <body>

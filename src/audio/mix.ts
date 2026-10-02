@@ -41,6 +41,8 @@ export interface MixStatus {
   /** 'opus' or 'aac', and any stem files that failed to fetch or decode. */
   format: string;
   failed: string[];
+  /** The sample rate the stems decode at. */
+  rate: number;
 }
 
 /**
@@ -126,6 +128,7 @@ export class Mix {
       loaded: [this.music.loaded && 'musicbox', this.choir.loaded && 'choir'].filter((s): s is string => !!s),
       format: this.library.format,
       failed: [...this.library.failed],
+      rate: this.library.rate,
     };
   }
 

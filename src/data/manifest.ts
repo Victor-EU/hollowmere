@@ -3,6 +3,7 @@
 export type Tier = 'desktop' | 'mobile';
 export type MapName = 'albedo' | 'normal' | 'emissive';
 
+/** A KTX2 file, or for `preview` a WebP a quarter of the mobile tier's size, drawn until the KTX2 arrives. */
 export interface TierFile {
   /** Relative to public/assets/. */
   file: string;
@@ -22,7 +23,7 @@ export interface ManifestTexture {
   /** 'synth' for the procedural stand-in, otherwise the generated candidate that shipped. */
   source: string;
   hash: string;
-  maps: Partial<Record<MapName, { srgb: boolean; tiers: Record<Tier, TierFile> }>>;
+  maps: Partial<Record<MapName, { srgb: boolean; tiers: Record<Tier, TierFile>; preview: TierFile }>>;
 }
 
 export interface StemFile {

@@ -19,10 +19,11 @@ import type { Dev } from './dev';
 import type { DevHost, DevTools } from './dev/types';
 import { lookChanged, onLook } from './render/look';
 import { makePost } from './render/post';
+import { Quality } from './render/quality';
 import { bakeShadows } from './render/shadows';
 import { makeHud } from './ui/hud';
 import { makeInput } from './ui/input';
-import { loadLibrary, pickTier } from './world/assets';
+import { TextureLibrary } from './world/assets';
 import { buildCastle } from './world/castle';
 import { Heights } from './world/heights';
 import { makeLights } from './world/lights';
@@ -35,6 +36,12 @@ import { makeTrees } from './world/trees';
 import { makeWater } from './world/water';
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+/** Startup milestones, read by tools/loadtime.ts. */
+const mark = (name: string) => performance.mark(`hm:${name}`);
+/** The first frame waits this long at most for the texture previews; past it, flat colours. */
+const PREVIEW_WAIT = 1500;
+/** Unfocused this long, the loop drops to 30 fps (design doc §19). */
+const UNFOCUSED_CAP = 60_000;
 
 function noWebGL() {
   $('#nogl').hidden = false;
@@ -42,6 +49,7 @@ function noWebGL() {
 }
 
 async function boot() {
+  mark('boot');
   const canvas = $<HTMLCanvasElement>('#scene');
   const isTouch = matchMedia('(pointer: coarse)').matches;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,7 +62,11 @@ async function boot() {
     noWebGL();
     return;
   }
-  let dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.25 : 1.5);
+  const params = new URLSearchParams(location.search);
+  const quality = new Quality(renderer.getContext() as WebGL2RenderingContext, params);
+  // The manifest and texture previews download while the world is built.
+  const library = TextureLibrary.open(renderer);
+  let dpr = quality.pixelRatio;
   renderer.setPixelRatio(dpr);
   renderer.setSize(innerWidth, innerHeight, false);
   renderer.shadowMap.enabled = true;
@@ -71,13 +83,18 @@ async function boot() {
   // World.
   const tex = makeTextures(renderer.capabilities.getMaxAnisotropy());
   initSprites(tex.glow);
-  const M = makeMaterials(await loadLibrary(renderer, pickTier()));
+  mark('canvas-textures');
+  const lib = await library;
+  mark('manifest');
+  const M = makeMaterials(lib);
   const heights = new Heights(world);
   const sky = makeSky(world, tex, fogColor);
   const castle = buildCastle(world, heights, M, tex);
-  const lights = makeLights(world, M, sky.moonDir, castle.boathouseLight, castle.lanternSpots);
+  const lights = makeLights(world, M, sky.moonDir, castle.boathouseLight, castle.lanternSpots, quality.shadowMap);
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-  const water = makeWater(size.x, size.y, camera, fogColor, tex.ripples, sky.moonDir);
+  // The low tier's reflection probe: over the middle of the lake, with the shores a little past its radii.
+  const probe = { at: new THREE.Vector3(world.lake.center[0], 4, world.lake.center[1]), radius: Math.max(...world.lake.radii) * 1.2 };
+  const water = makeWater(size.x, size.y, camera, fogColor, tex.ripples, sky.moonDir, probe);
   const mist = makeMist(world.life.mist, heights, tex.mist, sky.moonDir, reduceMotion);
   scene.add(
     sky.group,
@@ -92,16 +109,17 @@ async function boot() {
   );
 
   // Flight and sound.
-  const audio = new AudioEngine(zones);
+  // Devices that start on the low tier also get the music decoded at half rate.
+  const audio = new AudioEngine(zones, { decodeRate: quality.textures === 'mobile' ? 24000 : undefined });
   const route = new Route(routeData, new THREE.Vector3(...world.castleCentre));
   const flight = new Flight(world, route, heights, castle.colliders, castle.hall, camera, reduceMotion, () => audio.trigger('whoosh'));
   scene.add(flight.ghost.group, flight.trail.points);
 
   // Life.
   const ctx: LifeContext = { reduceMotion, player: flight.pos, playerVel: flight.vel, sound: (type, at) => audio.trigger(type, at) };
-  const living: Living[] = [
-    makePumpkins(world, tex, castle.viaduct, ctx),
-    makeCandles(world.life.candles, castle.hall, ctx),
+  // Everything here moves except the pumpkins and candles.
+  const still: Living[] = [makePumpkins(world, tex, castle.viaduct, ctx), makeCandles(world.life.candles, castle.hall, ctx)];
+  const moving: Living[] = [
     makeGhosts(
       world.life.ghosts,
       {
@@ -120,7 +138,11 @@ async function boot() {
     makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.every, ctx),
     makeLake(world, M, castle.boatHome),
   ];
+  const living = [...still, ...moving];
   for (const l of living) scene.add(l.object);
+  /** Left out of the lake's probe, which would freeze them. */
+  const unreflected = [flight.ghost.group, flight.trail.points, ...moving.map((l) => l.object)];
+  mark('world');
 
   // UI.
   const toggleAuto = () => hud.setAuto(flight.toggleAuto());
@@ -146,7 +168,6 @@ async function boot() {
   });
 
   // Deep links: ?at=hall starts at a named route point, ?autofly=0 starts in free flight.
-  const params = new URLSearchParams(location.search);
   const at = params.get('at');
   if (at && at in routeData.named) flight.jump(route.tAt(routeData.named[at]));
   if (params.get('autofly') === '0') toggleAuto();
@@ -164,13 +185,23 @@ async function boot() {
     setSpriteScale(buf.y, camera.fov);
   };
   addEventListener('resize', onResize);
-  onResize();
+  // The tier's settings, now and whenever adaptation (or the battery) changes it.
+  let probeStale = false;
+  let reflection: number | 'probe' | null = null;
+  const applyQuality = () => {
+    const s = quality.settings;
+    dpr = quality.pixelRatio;
+    // Draw the probe when the lake first needs it.
+    if (s.reflection === 'probe' && reflection !== 'probe') probeStale = true;
+    reflection = s.reflection;
+    water.setReflection(s.reflection);
+    post.setMsaa(s.msaa);
+    post.setBloomMips(s.bloomMips);
+    onResize();
+  };
+  applyQuality();
+  quality.onChange(applyQuality);
   flight.jump(flight.auto.t);
-
-  // Adaptive resolution: frames and seconds since the last check, and how often it stepped down.
-  let frames = 0;
-  let acc = 0;
-  let adapted = 0;
 
   // Dev tools: everything in dev builds; just the stats overlay with ?stats in production.
   const host: DevHost = {
@@ -187,19 +218,35 @@ async function boot() {
     colliders: castle.colliders,
     input,
     hud,
-    quality: () => ({ dpr, adapted }),
+    quality: () => ({ dpr, name: quality.name, pinned: quality.pinned, log: quality.log, streamed: lib.streamed }),
     zoneLabel: () => zoneLabelAt(zones, flight.pos),
   };
   let dev: DevTools | null = null;
   if (import.meta.env.DEV) dev = (await import('./dev')).installDev(host);
   else if (params.has('stats')) dev = (await import('./dev/stats')).statsOnly(host);
 
-  // Loop. Paused while the tab is hidden.
+  // Shaders compile while the previews finish downloading, so the first frame doesn't stall on either.
+  const all = camera.layers.mask;
+  camera.layers.enableAll();
+  const compiled = renderer.compileAsync(scene, camera);
+  camera.layers.mask = all;
+  await Promise.all([lib.previews(PREVIEW_WAIT), compiled]);
+  mark('previews');
+
+  // Loop. Paused while the tab is hidden, and at 30 fps once the window has been unfocused a minute.
   let last = performance.now();
   let first = true;
   let raf = 0;
+  let blurredAt = document.hasFocus() ? null : last;
+  addEventListener('blur', () => (blurredAt = performance.now()));
+  addEventListener('focus', () => (blurredAt = null));
   const frame = (now: number) => {
-    const real = Math.min(0.05, (now - last) / 1000);
+    raf = requestAnimationFrame(frame);
+    const capped = blurredAt !== null && now - blurredAt > UNFOCUSED_CAP;
+    if (capped && now - last < 1000 / 30 - 4) return;
+    // The world steps at most 50 ms a frame; the frame-rate check needs the true time.
+    const elapsed = (now - last) / 1000;
+    const real = Math.min(0.05, elapsed);
     last = now;
     dev?.begin(now);
     // Dev tools can pause the world or fly their own camera.
@@ -213,6 +260,7 @@ async function boot() {
     mist.update(t);
     lights.update(t);
     for (const l of living) l.update(dt, t);
+    lib.update(real);
     audio.update({ position: flight.pos, yaw: flight.yaw, speed: flight.vel.length() }, dt);
     hud.update(flight, zoneLabelAt(zones, flight.pos));
     dev?.update(real);
@@ -223,28 +271,23 @@ async function boot() {
       // The moon's map is drawn; from now on only the Warden's lantern redraws one.
       bakeShadows(scene);
       hud.ready();
+      mark('first-frame');
+      // Full-resolution textures, now that you can fly; the lake's probe sees them once they're in.
+      void lib.stream(quality.textures).then(() => (probeStale = quality.settings.reflection === 'probe'));
     }
-    // Lower the resolution once or twice if the GPU is struggling.
-    frames++;
-    acc += real;
-    if (acc > 2.5) {
-      const fps = frames / acc;
-      frames = 0;
-      acc = 0;
-      if (fps < 38 && adapted < 2 && dpr > 0.75) {
-        dpr = Math.max(0.75, dpr * 0.75);
-        adapted++;
-        onResize();
-      }
+    if (probeStale) {
+      probeStale = false;
+      water.capture(renderer, scene, unreflected);
     }
-    raf = requestAnimationFrame(frame);
+    // A frame over a second is a hitch (a compile, a GC, a stall), not a frame rate.
+    quality.frame(elapsed, !capped && elapsed < 1);
   };
   document.addEventListener('visibilitychange', () => {
     audio.setPaused(document.hidden);
     if (document.hidden) cancelAnimationFrame(raf);
     else {
       last = performance.now();
-      frames = acc = 0;
+      quality.frame(0, false);
       raf = requestAnimationFrame(frame);
     }
   });
@@ -255,7 +298,7 @@ async function boot() {
 
   // A small hook for tinkering in the console, screenshot tests and `npm run validate`.
   Object.assign(window, {
-    hollowmere: { flight, scene, renderer, post, audio, look, lookChanged, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
+    hollowmere: { flight, scene, renderer, post, audio, look, lookChanged, quality, textures: lib, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
   });
 }
 

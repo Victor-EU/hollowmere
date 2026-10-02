@@ -34,10 +34,13 @@ export class AudioEngine {
   private wants: boolean;
   private listener: ListenerState = { position: { x: 0, y: 0, z: 0 }, yaw: 0, speed: 0 };
   private suspendTimer = 0;
+  private readonly decodeRate: number | undefined;
 
-  constructor(zones: Zone[]) {
+  /** `decodeRate`: decode the music at this sample rate, to save memory on small devices. */
+  constructor(zones: Zone[], { decodeRate }: { decodeRate?: number } = {}) {
     this.zones = zones;
     this.wants = readPref();
+    this.decodeRate = decodeRate;
   }
 
   /** True once the AudioContext exists and sound is on. */
@@ -109,7 +112,7 @@ export class AudioEngine {
         return false;
       }
       unlock(ctx);
-      this.mix = new Mix(ctx, this.zones, new StemLibrary(ctx, new URL('assets/', document.baseURI)));
+      this.mix = new Mix(ctx, this.zones, new StemLibrary(ctx, new URL('assets/', document.baseURI), this.decodeRate));
     }
     window.clearTimeout(this.suspendTimer);
     this.enabled = true;

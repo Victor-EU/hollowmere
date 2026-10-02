@@ -1,22 +1,15 @@
 import * as THREE from 'three';
 import { look, onLook } from '../render/look';
-import type { Library, TextureSet } from './assets';
+import type { TextureId, TextureLibrary } from './assets';
 
-/** A textured standard material; without its textures (not processed yet) it falls back to `flat`. */
-function textured(name: string, set: TextureSet, flat: string, extra: THREE.MeshStandardMaterialParameters = {}) {
-  const m = new THREE.MeshStandardMaterial({
-    name,
-    map: set.map,
-    normalMap: set.normalMap,
-    roughness: set.roughness,
-    metalness: set.metalness,
-    color: set.map ? 0xffffff : new THREE.Color(flat),
-    ...extra,
-  });
-  if (set.emissiveMap) {
-    m.emissiveMap = set.emissiveMap;
-    m.emissive = new THREE.Color(0xffffff);
-  }
+/**
+ * A standard material on one of the library's texture sets. It shows `flat` until the set's
+ * preview arrives, and stays that colour if the textures haven't been processed.
+ */
+function textured(lib: TextureLibrary, id: TextureId, name: string, flat: string, extra: THREE.MeshStandardMaterialParameters = {}) {
+  const set = lib.info(id);
+  const m = new THREE.MeshStandardMaterial({ name, roughness: set.roughness, metalness: set.metalness, color: new THREE.Color(flat), ...extra });
+  lib.bind(m, id, flat);
   return m;
 }
 
@@ -25,20 +18,16 @@ function textured(name: string, set: TextureSet, flat: string, extra: THREE.Mesh
  * the first mockup pass used ~1.5x and the hall bloomed into white mush, so change them only
  * while looking at the result.
  */
-export function makeMaterials(lib: Library) {
-  const slate = textured('slate', lib.slate, '#2f3236');
-  const slateDouble = slate.clone();
-  slateDouble.name = 'slate-double';
-  slateDouble.side = THREE.DoubleSide;
+export function makeMaterials(lib: TextureLibrary) {
   const M = {
     /** Castle stone with the window atlas: lit windows are in its emissive map. */
-    tower: textured('tower', lib['tower-windows'], '#524f4a'),
-    stone: textured('stone', lib.stone, '#524f4a'),
-    floor: textured('floor', lib.flagstone, '#4b4844'),
+    tower: textured(lib, 'tower-windows', 'tower', '#524f4a'),
+    stone: textured(lib, 'stone', 'stone', '#524f4a'),
+    floor: textured(lib, 'flagstone', 'floor', '#4b4844'),
     /** The great hall's stained glass, mapped once per window. You fly in through it. */
-    glass: textured('glass', lib['hall-glass'], '#3a2a1e', { side: THREE.DoubleSide }),
-    slate,
-    slateDouble,
+    glass: textured(lib, 'hall-glass', 'glass', '#3a2a1e', { side: THREE.DoubleSide }),
+    slate: textured(lib, 'slate', 'slate', '#2f3236'),
+    slateDouble: textured(lib, 'slate', 'slate-double', '#2f3236', { side: THREE.DoubleSide }),
     iron: new THREE.MeshStandardMaterial({ name: 'iron', color: new THREE.Color('#16171c'), roughness: 0.5, metalness: 0.7 }),
     wood: new THREE.MeshStandardMaterial({ name: 'wood', color: new THREE.Color('#2a1b12'), roughness: 0.8 }),
     dark: new THREE.MeshStandardMaterial({ name: 'dark', color: new THREE.Color('#33343a'), roughness: 0.9 }),

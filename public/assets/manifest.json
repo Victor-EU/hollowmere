@@ -11,6 +11,12 @@
       "maps": {
         "albedo": {
           "srgb": true,
+          "preview": {
+            "file": "tex/stone.albedo.256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 3084
+          },
           "tiers": {
             "desktop": {
               "file": "tex/stone.albedo.2048.ktx2",
@@ -28,6 +34,12 @@
         },
         "normal": {
           "srgb": false,
+          "preview": {
+            "file": "tex/stone.normal.128.webp",
+            "width": 128,
+            "height": 128,
+            "bytes": 894
+          },
           "tiers": {
             "desktop": {
               "file": "tex/stone.normal.1024.ktx2",
@@ -55,6 +67,12 @@
       "maps": {
         "albedo": {
           "srgb": true,
+          "preview": {
+            "file": "tex/flagstone.albedo.256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 4306
+          },
           "tiers": {
             "desktop": {
               "file": "tex/flagstone.albedo.2048.ktx2",
@@ -72,6 +90,12 @@
         },
         "normal": {
           "srgb": false,
+          "preview": {
+            "file": "tex/flagstone.normal.128.webp",
+            "width": 128,
+            "height": 128,
+            "bytes": 1268
+          },
           "tiers": {
             "desktop": {
               "file": "tex/flagstone.normal.1024.ktx2",
@@ -99,6 +123,12 @@
       "maps": {
         "albedo": {
           "srgb": true,
+          "preview": {
+            "file": "tex/hall-glass.albedo.64x256.webp",
+            "width": 64,
+            "height": 256,
+            "bytes": 3314
+          },
           "tiers": {
             "desktop": {
               "file": "tex/hall-glass.albedo.512x2048.ktx2",
@@ -116,6 +146,12 @@
         },
         "emissive": {
           "srgb": true,
+          "preview": {
+            "file": "tex/hall-glass.emissive.64x256.webp",
+            "width": 64,
+            "height": 256,
+            "bytes": 4486
+          },
           "tiers": {
             "desktop": {
               "file": "tex/hall-glass.emissive.512x2048.ktx2",
@@ -144,6 +180,12 @@
       "maps": {
         "albedo": {
           "srgb": true,
+          "preview": {
+            "file": "tex/slate.albedo.256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 3872
+          },
           "tiers": {
             "desktop": {
               "file": "tex/slate.albedo.2048.ktx2",
@@ -161,6 +203,12 @@
         },
         "normal": {
           "srgb": false,
+          "preview": {
+            "file": "tex/slate.normal.128.webp",
+            "width": 128,
+            "height": 128,
+            "bytes": 374
+          },
           "tiers": {
             "desktop": {
               "file": "tex/slate.normal.1024.ktx2",
@@ -188,6 +236,12 @@
       "maps": {
         "albedo": {
           "srgb": true,
+          "preview": {
+            "file": "tex/tower-windows.albedo.256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 4040
+          },
           "tiers": {
             "desktop": {
               "file": "tex/tower-windows.albedo.2048.ktx2",
@@ -205,6 +259,12 @@
         },
         "normal": {
           "srgb": false,
+          "preview": {
+            "file": "tex/tower-windows.normal.128.webp",
+            "width": 128,
+            "height": 128,
+            "bytes": 1758
+          },
           "tiers": {
             "desktop": {
               "file": "tex/tower-windows.normal.1024.ktx2",
@@ -222,6 +282,12 @@
         },
         "emissive": {
           "srgb": true,
+          "preview": {
+            "file": "tex/tower-windows.emissive.128.webp",
+            "width": 128,
+            "height": 128,
+            "bytes": 958
+          },
           "tiers": {
             "desktop": {
               "file": "tex/tower-windows.emissive.1024.ktx2",

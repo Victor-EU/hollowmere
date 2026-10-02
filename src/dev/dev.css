@@ -10,6 +10,7 @@
 .dev-stats .over{color:#ff8a7a;font-weight:600}
 .dev-stats .dev-mode{color:var(--lamp)}
 .dev-stats .keys{color:var(--dim);font-size:11px}
+.dev-stats .dim{color:var(--dim)}
 
 .dev-route{pointer-events:auto;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:auto;user-select:text;-webkit-user-select:text}
 .dev-route header{display:flex;flex-direction:column;gap:1px}

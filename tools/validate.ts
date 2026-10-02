@@ -2,11 +2,12 @@
 // measures draw calls and triangles against the design budgets. Last, it turns sound on and checks
 // that every composed stem in the manifest downloads and decodes, and the music box plays its stem.
 //
-//   node tools/validate.ts [devUrl] [--strict]
+//   node tools/validate.ts [devUrl] [--strict] [--quality=high|medium|low]
 //
 // Without a URL it starts its own Vite dev server (the checks live in the dev build). Exits 1 on
 // any error: non-finite or malformed geometry, bad data, or a console error. --strict also fails
-// on warnings and budget overruns.
+// on warnings and budget overruns. The budgets are checked on the high tier (the most draws), pinned
+// so adaptation can't lower it partway; --quality checks another.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -44,6 +45,7 @@ type Hook = {
 };
 
 const strict = process.argv.includes('--strict');
+const quality = process.argv.find((a) => a.startsWith('--quality='))?.split('=')[1] ?? 'high';
 let base = process.argv.slice(2).find((a) => !a.startsWith('--'));
 let server: ViteDevServer | null = null;
 if (!base) {
@@ -67,7 +69,7 @@ const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '../public/as
 const stems = Object.values(manifest.stems ?? {}).map((s) => s.layer);
 let audio: AudioStatus | null = null;
 try {
-  await page.goto(base);
+  await page.goto(new URL(`?quality=${quality}`, base).href);
   await page.waitForFunction(() => !!(window as Hook).hollowmere?.dev, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   for (let i = 0; i < STOPS; i++) {
@@ -99,7 +101,7 @@ const { geometry: g, route: r } = report;
 const mark = (ok: boolean) => (ok ? '✓' : '✗');
 const fmt = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : `${n}`);
 
-console.log(`Hollowmere validate · ${base}`);
+console.log(`Hollowmere validate · ${base} · ${quality} tier`);
 console.log(`  geometry  ${g.objects} objects, ${g.geometries} geometries, ${fmt(g.vertices)} vertices`);
 console.log(`  route     ${(r.length / 1000).toFixed(2)} km, ${Math.floor(r.duration / 60)} min ${Math.round(r.duration % 60)} s a loop, lowest ${r.lowestMargin.toFixed(1)} m above clearance`);
 console.log(`  draws     ${mark(!overCalls.length)} worst ${worst('calls').calls} at t=${worst('calls').t.toFixed(3)} (budget ${BUDGET.calls}; over at ${overCalls.length} of ${STOPS} points)`);

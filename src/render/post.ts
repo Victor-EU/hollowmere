@@ -64,18 +64,35 @@ const GradeShader = {
 
 /**
  * Draws the scene into the HDR target in two goes: layer 0 (everything that writes depth, and the
- * sky), then the late layers (see render/layers.ts). three resolves the MSAA colour and depth at
- * the end of each render, so by the second the depth texture holds the opaque scene for the mist.
- * (Without MSAA the depth texture would be attached to the target it's read in; the low tier in M6
- * will need a copy.)
+ * sky), then the late layers (see render/layers.ts). With MSAA, three resolves the colour and
+ * depth at the end of each render, so by the second the depth texture holds the opaque scene for
+ * the mist. Without it (the low tier) that depth texture is the target's own depth buffer, which
+ * can't be read while drawing into it, so the mist reads a copy.
  */
 class ScenePass extends Pass {
+  private depthCopy: THREE.WebGLRenderTarget | null = null;
+
   constructor(
     private scene: THREE.Scene,
     private camera: THREE.PerspectiveCamera,
   ) {
     super();
     this.needsSwap = false;
+  }
+
+  private opaqueDepth(renderer: THREE.WebGLRenderer, read: THREE.WebGLRenderTarget): THREE.Texture | null {
+    if (read.samples > 0) {
+      this.depthCopy?.dispose();
+      this.depthCopy = null;
+      return read.depthTexture;
+    }
+    const copy = (this.depthCopy ??= new THREE.WebGLRenderTarget(read.width, read.height, { depthTexture: new THREE.DepthTexture(read.width, read.height) }));
+    copy.setSize(read.width, read.height);
+    renderer.initRenderTarget(copy);
+    renderer.copyTextureToTexture(read.depthTexture!, copy.depthTexture!);
+    // The copy leaves no framebuffer bound; the late layers draw into `read` again.
+    renderer.setRenderTarget(read);
+    return copy.depthTexture;
   }
 
   render(renderer: THREE.WebGLRenderer, _write: THREE.WebGLRenderTarget, read: THREE.WebGLRenderTarget) {
@@ -87,7 +104,7 @@ class ScenePass extends Pass {
     renderer.clear();
     camera.layers.set(0);
     renderer.render(scene, camera);
-    sceneDepth.tDepth.value = read.depthTexture;
+    sceneDepth.tDepth.value = this.opaqueDepth(renderer, read);
     sceneDepth.uNear.value = camera.near;
     sceneDepth.uFar.value = camera.far;
     camera.layers.set(LAYER.late);
@@ -143,9 +160,13 @@ export interface Post {
   bloom: UnrealBloomPass;
   render(dt: number, time: number, phase: number): void;
   setSize(width: number, height: number, pixelRatio: number): void;
+  /** MSAA samples for the scene: 4, 2, or 0 for none. */
+  setMsaa(samples: number): void;
+  /** How many of the bloom's five blur levels to draw; fewer is cheaper and tighter. */
+  setBloomMips(n: number): void;
 }
 
-/** HDR half-float target with 4x MSAA and a depth texture → scene in two goes → bloom → grade. */
+/** HDR half-float target with MSAA (per tier) and a depth texture → scene in two goes → bloom → grade. */
 export function makePost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, reduceMotion: boolean): Post {
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
   const rt = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, samples: 4, depthTexture: new THREE.DepthTexture(size.x, size.y) });
@@ -187,6 +208,19 @@ export function makePost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, came
       composer.setPixelRatio(pixelRatio);
       composer.setSize(width, height);
       grade.uniforms.uRes.value.set(Math.floor(width * pixelRatio), Math.floor(height * pixelRatio));
+    },
+    setMsaa(samples) {
+      for (const t of [composer.renderTarget1, composer.renderTarget2]) {
+        if (t.samples === samples) continue;
+        t.samples = samples;
+        // Rebuilt with the new sample count on its next use.
+        t.dispose();
+      }
+    },
+    setBloomMips(n) {
+      bloom.nMips = n;
+      // The composite still reads all five; the ones not drawn add nothing.
+      bloom.bloomTintColors.forEach((c, i) => c.setScalar(i < n ? 1 : 0));
     },
   };
 }

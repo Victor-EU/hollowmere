@@ -14,7 +14,8 @@
     "validate": "node tools/validate.ts",
     "generate": "node tools/generate.ts",
     "process": "node tools/process.ts",
-    "stems": "node tools/stems.ts"
+    "stems": "node tools/stems.ts",
+    "loadtime": "node tools/loadtime.ts"
   },
   "dependencies": {
     "three": "0.186.1"
