@@ -58,6 +58,9 @@ export function makeLights(
   const e = L.moonShadow.extent;
   Object.assign(moon.shadow.camera, { left: -e, right: e, top: e, bottom: -e, near: 100, far: 1100 });
   moon.shadow.mapSize.set(L.moonShadow.mapSize, L.moonShadow.mapSize);
+  // Drawn once: the world is static (render/shadows.ts).
+  moon.shadow.autoUpdate = false;
+  moon.shadow.needsUpdate = true;
   moon.shadow.bias = -0.0004;
   moon.shadow.normalBias = 0.5;
   // Stands in for the mockup's PCFSoftShadowMap, which three removed.

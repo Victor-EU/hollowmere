@@ -31,7 +31,7 @@ export function makeLake(world: WorldData, M: Materials, boatHome: THREE.Vector3
   const part = (g: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number) => {
     const o = new THREE.Mesh(g, m);
     o.position.set(x, y, z);
-    o.castShadow = true;
+    // It moves, so it stays out of the moon's once-drawn shadow map.
     o.receiveShadow = true;
     boat.add(o);
     return o;

@@ -11,11 +11,13 @@ import { makeLake } from './life/lake';
 import { makePumpkins } from './life/pumpkins';
 import { initSprites, setSpriteScale } from './life/sprites';
 import type { LifeContext, Living } from './life/types';
+import { makeWarden } from './life/warden';
 import { makeWyrm } from './life/wyrm';
 import type { Dev } from './dev';
 import type { DevHost, DevTools } from './dev/types';
 import { lookChanged, onLook } from './render/look';
 import { makePost } from './render/post';
+import { bakeShadows } from './render/shadows';
 import { makeHud } from './ui/hud';
 import { makeInput } from './ui/input';
 import { loadLibrary, pickTier } from './world/assets';
@@ -55,8 +57,6 @@ async function boot() {
   renderer.setSize(innerWidth, innerHeight, false);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
-  // The world is static, so the moon's shadow map is rendered once.
-  renderer.shadowMap.autoUpdate = false;
 
   const scene = new THREE.Scene();
   const fog = new THREE.FogExp2(0, look.fog.density);
@@ -83,7 +83,7 @@ async function boot() {
     makeRockColumn(world.cliff, 'cliff'),
     makeRockColumn(world.outcrop, 'outcrop'),
     castle.group,
-    makeTrees(world, heights, M, castle.viaduct.b),
+    makeTrees(world, heights, M, tex, castle.viaduct.b),
     lights.group,
     water.mesh,
     mist.mesh,
@@ -96,17 +96,24 @@ async function boot() {
   scene.add(flight.ghost.group, flight.trail.points);
 
   // Life.
-  const ctx: LifeContext = { reduceMotion, player: flight.pos, sound: (type, at) => audio.trigger(type, at) };
+  const ctx: LifeContext = { reduceMotion, player: flight.pos, playerVel: flight.vel, sound: (type, at) => audio.trigger(type, at) };
   const living: Living[] = [
     makePumpkins(world, tex, castle.viaduct, ctx),
     makeCandles(world.life.candles, castle.hall, ctx),
-    makeGhosts(world.life.ghosts, {
-      gate: castle.gate.clone().add(new THREE.Vector3(0, 4, -14)),
-      hall: new THREE.Vector3(castle.hall.cx, castle.hall.y0 + 6, castle.hall.cz),
-      pier: castle.boatHome.clone().setY(3),
-    }),
+    makeGhosts(
+      world.life.ghosts,
+      {
+        gate: castle.gate.clone().add(new THREE.Vector3(0, 4, -14)),
+        hall: new THREE.Vector3(castle.hall.cx, castle.hall.y0 + 6, castle.hall.cz),
+        pier: castle.boatHome.clone().setY(3),
+      },
+      castle.hall,
+      M,
+      ctx,
+    ),
     makeBats(world.life.bats),
-    makeWyrm(world, M, ctx),
+    makeWyrm(world, tex, ctx),
+    makeWarden(world, heights, M, ctx, castle.colliders),
     makeLake(world, M, castle.boatHome),
   ];
   for (const l of living) scene.add(l.object);
@@ -203,11 +210,12 @@ async function boot() {
     audio.update({ position: flight.pos, yaw: flight.yaw, speed: flight.vel.length() }, dt);
     hud.update(flight, zoneLabelAt(zones, flight.pos));
     dev?.update(real);
-    if (first) renderer.shadowMap.needsUpdate = true;
     post.render(dt, t, flight.phase);
     dev?.end();
     if (first) {
       first = false;
+      // The moon's map is drawn; from now on only the Warden's lantern redraws one.
+      bakeShadows(scene);
       hud.ready();
     }
     // Lower the resolution once or twice if the GPU is struggling.
@@ -241,7 +249,7 @@ async function boot() {
 
   // A small hook for tinkering in the console, screenshot tests and `npm run validate`.
   Object.assign(window, {
-    hollowmere: { flight, scene, renderer, post, look, lookChanged, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
+    hollowmere: { flight, scene, renderer, post, audio, look, lookChanged, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) },
   });
 }
 

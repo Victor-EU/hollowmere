@@ -55,6 +55,17 @@ export type MistBank = BoxOrRing & {
   tint?: number;
 };
 
+/** Something a wandering ghost wears or carries, so no two look quite alike. */
+export type GhostLook = 'plain' | 'hat' | 'lantern' | 'chain' | 'long';
+
+/** An idle action: drift through some points, then linger there facing something. */
+export interface GhostIdle {
+  /** Offsets from the group's home. One point to go and look; several to drift up a stair. */
+  path: Vec3[];
+  /** Offset from home to face while lingering; the way it was going if left out. */
+  look?: Vec3;
+}
+
 export interface GhostGroup {
   /** A named anchor ('gate', 'hall', 'pier') or a point. */
   home: 'gate' | 'hall' | 'pier' | Vec3;
@@ -66,6 +77,12 @@ export interface GhostGroup {
   scale: Range;
   /** Randomly flip each ghost's orbit direction. */
   eitherWay?: boolean;
+  /** One per ghost, in order (repeating); 'plain' if left out. */
+  looks?: GhostLook[];
+  /** Idle actions besides pausing to sway. */
+  idles?: GhostIdle[];
+  /** Drift aside to let the player through (the two in the hall). */
+  makeWay?: boolean;
 }
 
 export interface WorldData {
@@ -109,7 +126,12 @@ export interface WorldData {
     bats: { center: Vec3; count: number }[];
     ghosts: GhostGroup[];
     wisps: { count: number; min: Vec3; max: Vec3; radius: Range; speed: Range };
-    wyrm: { center: Vec3; radius: number; segments: number };
+    wyrm: { center: Vec3; radius: number };
+    /**
+     * The gate guardian: where it stands (on the ground), the point it faces, how near you must
+     * come for the lantern to follow you, and the lantern's spotlight (decay 1, like the warm lights).
+     */
+    warden: { at: Vec2; facing: Vec2; reach: number; light: number };
     mist: MistBank[];
   };
 }

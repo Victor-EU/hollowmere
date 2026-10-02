@@ -4,7 +4,7 @@ import { Pool } from '../life/sprites';
 import type { Castle, Colliders } from '../world/castle';
 import type { Heights } from '../world/heights';
 import { angLerp, clamp, dampK, lerp, smoothstep } from '../world/math';
-import { makeGhost, type Ghost } from './ghost';
+import { ghostShadow, makeGhost, type Ghost } from './ghost';
 import type { Route } from './route';
 
 /** Movement and look input for one frame. Look deltas are pixels and are consumed by `step`. */
@@ -115,6 +115,7 @@ export class Flight {
     this.ghost = makeGhost(0, 0.85);
     this.ghost.group.name = 'player-ghost';
     this.ghost.group.scale.setScalar(1.6);
+    this.ghost.group.add(ghostShadow());
     this.trail.points.name = 'ghost-trail';
     this.camera.rotation.order = 'YXZ';
     this.jump(0);

@@ -61,6 +61,17 @@ npm run compare -- reference/painting-a.png shots/lake-port.png
 
 It writes `shots/lake-port-compare.png` and prints, for both images, the brightness spread, how much is near black, how much is warm light, and the colour of the sky, the shadows and the highlights. Take a quality, never a composition: compare palette and light, not layout.
 
+## Life
+
+Everything that moves on its own is in `src/life/`; where it lives is in `data/world.json` under `life`. The creature bible is design doc §10. Each creature has a small, local reaction to you that never stops or follows you.
+
+- **The wyrm** is one skinned mesh: an iron-dark hide with ember-red in the seams between scales, a hinged jaw, and bat wings with shoulder, elbow, wrist and finger bones that flap in bouts between glides. Its spine bones are laid along a loop round the keep every frame, so the body flows through the turns. It breathes fire along its path every 8–13 s. Hover above about 130 m near the keep and the next pass leans up to 20 m toward you (never nearer than 15 m, passing over or under rather than beside, gliding so the wings stay clear) while the head turns to look.
+- **Wandering ghosts** loop round their home points, now and then stopping to sway or drifting off to an idle spot (peering through a hall window, over a parapet, up the gate stairs) listed in `world.json` as offsets from home. Come within 10 m and one turns to you and nods, with a faint sigh. The two in the hall drift aside to let you through. Each wears or carries something: a hat, a lantern, a chain, a long skirt.
+- **The Lantern Warden** stands by the gate, a hooded figure woven from roots and iron with a lantern for a head. Within 20 m on its side of the gate, the lantern turns to follow you with a spotlight that throws your ghost's shadow down the stairs, and turns back over 3 s after you leave.
+- **Trees**: about 2,600 firs in three ragged tiers, and about 450 autumn trees in three branching shapes with leaf-cluster cards (plus a bare one that gathers by the gate). Instanced: a few draws for all of them.
+
+Shadows (`src/render/shadows.ts`): the world is static, so the moon's map is drawn once on the first frame. After that nothing casts except an invisible stand-in for your ghost, and the only map redrawn is the Warden's spotlight, while it's needed.
+
 ## Textures
 
 The castle's surfaces come from a small texture library: castle stone, the tower window atlas (with its emissive map), roof slate, flagstones and the hall's stained glass. Each has a spec in `prompts/<id>.yaml` holding the image prompt, the tile size in metres, which maps to build at which size per tier, and its `source`.
@@ -85,9 +96,9 @@ prompts/<id>.yaml ─ npm run generate ─▶ assets/raw/<id>/<candidate>.png   
 - `src/world/`: terrain, rock columns, sky, water, mist, trees, lights, and the texture library loader
 - `src/world/kit/`: the castle kit (towers, curtain walls, the great hall, the viaduct, the gate, the boathouse), assembled from `data/world.json` by `src/world/castle.ts`
 - `src/flight/`: the ghost, flight model, camera and autofly
-- `src/life/`: pumpkins, candles, ghosts, bats, the wyrm, the lake's wisps and boat
+- `src/life/`: pumpkins, candles, wandering ghosts, bats, the wyrm, the Lantern Warden, the lake's wisps and boat
 - `src/audio/`: synthesized music and ambience, driven by the zones
-- `src/render/`: the two-pass scene render, bloom and grade, and the look data's live hooks
+- `src/render/`: the two-pass scene render, bloom and grade, the look data's live hooks, and the once-drawn shadows
 - `src/ui/`: HUD, controls, touch input
 - `src/dev/`: stats overlay, free camera, route editor, look panel, geometry and data checks (left out of production builds, except the overlay behind `?stats`)
 - `prompts/`: one spec per texture, plus the style guide prepended to every prompt

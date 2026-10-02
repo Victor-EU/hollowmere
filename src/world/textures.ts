@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { clamp, fbm, rng } from './math';
+import { clamp, fbm, rng, smoothstep } from './math';
 
 // Procedural canvas textures from the mockup, for sky, sprites and small props. The castle's
 // surfaces come from the processed texture library instead (src/world/assets.ts).
@@ -242,6 +242,101 @@ function pumpkinTex(emissive: boolean) {
 }
 
 /**
+ * The wyrm's hide: a tile of overlapping scales, 4 across and 8 rows deep, each row offset by half
+ * a scale and tucked under the row in front of it, so the free edges point to the tail (+v). The
+ * albedo is iron-dark; the emissive map glows ember-red only in the thin seams.
+ */
+function makeScales(size = 256): { albedo: THREE.CanvasTexture; ember: THREE.CanvasTexture } {
+  const COLS = 4;
+  const ROWS = 8;
+  const R = 0.62;
+  // A scale's shade by its place in the tile, so the tile still wraps.
+  const shade = (c: number, r: number) => {
+    const s = Math.sin((c * 12.9898 + r * 78.233 + 1.3) * 1.7) * 43758.5453;
+    return s - Math.floor(s);
+  };
+  const albedo = new ImageData(size, size);
+  const ember = new ImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const X = (x / size) * COLS;
+      const Y = (y / size) * (ROWS / 2);
+      // The scale on top is the covering one nearest the head (lowest row).
+      let d = 1;
+      let v = 0;
+      const r0 = Math.floor(Y * 2);
+      for (let r = r0 - 2; r <= r0 + 1; r++) {
+        const off = ((r % 2) + 2) % 2 ? 0.5 : 0;
+        const c = Math.round(X - off - 0.5);
+        let best = Infinity;
+        let bc = 0;
+        for (const cc of [c - 1, c, c + 1]) {
+          const dd = Math.hypot(X - (cc + off + 0.5), Y - r * 0.5) / R;
+          if (dd < best) {
+            best = dd;
+            bc = cc;
+          }
+        }
+        if (best < 1) {
+          d = best;
+          v = shade(((bc % COLS) + COLS) % COLS, ((r % ROWS) + ROWS) % ROWS);
+          break;
+        }
+      }
+      const i = (y * size + x) * 4;
+      // Darker toward the free edge, a sheen near the root of each scale.
+      const body = (0.8 + 0.35 * v) * (1 - 0.5 * smoothstep(0.6, 1, d)) * (1 + 0.2 * (1 - smoothstep(0, 0.55, d)));
+      albedo.data[i] = clamp(58 * body, 0, 255);
+      albedo.data[i + 1] = clamp(47 * body, 0, 255);
+      albedo.data[i + 2] = clamp(42 * body, 0, 255);
+      albedo.data[i + 3] = 255;
+      const e = smoothstep(0.9, 0.995, d) * (0.5 + 0.5 * v);
+      ember.data[i] = 220 * e;
+      ember.data[i + 1] = 70 * e * e;
+      ember.data[i + 2] = 18 * e * e;
+      ember.data[i + 3] = 255;
+    }
+  }
+  const put = (img: ImageData) => canvasTex(size, size, (g) => g.putImageData(img, 0, 0));
+  return { albedo: put(albedo), ember: put(ember) };
+}
+
+/**
+ * A cluster of leaves on a transparent card, for the autumn trees: pointed ovals at random angles,
+ * thick in the middle and ragged at the edge, in greys so each tree's colour tints them.
+ */
+function makeLeaves(size = 256) {
+  return canvasTex(
+    size,
+    size,
+    (g, w) => {
+      const R = rng(404);
+      const c = w / 2;
+      for (let i = 0; i < 150; i++) {
+        // Denser toward the centre, so the card stays solid when mipmaps soften its edge.
+        const a = R() * Math.PI * 2;
+        const r = Math.pow(R(), 0.65) * c * 0.84;
+        const x = c + Math.cos(a) * r;
+        const y = c + Math.sin(a) * r;
+        const s = (0.045 + R() * 0.04) * w;
+        const v = Math.round(150 + R() * 105 - (r / c) * 40);
+        g.save();
+        g.translate(x, y);
+        g.rotate(R() * Math.PI * 2);
+        g.fillStyle = `rgb(${v},${v},${v})`;
+        g.beginPath();
+        g.moveTo(-s, 0);
+        g.quadraticCurveTo(-s * 0.2, -s * 0.55, s, 0);
+        g.quadraticCurveTo(-s * 0.2, s * 0.55, -s, 0);
+        g.fill();
+        g.restore();
+      }
+    },
+    { repeat: false },
+  );
+}
+
+/**
  * Tileable ripple slopes for the lake: a sum of wave trains whose wave vectors fit the tile, so it
  * wraps exactly. Slopes (dh/dx, dh/dz) in RG with 0.5 as flat, so mipmaps average them properly
  * and far water calms into a mirror.
@@ -303,6 +398,8 @@ export function makeTextures(maxAnisotropy: number) {
     pumpkin: pumpkinTex(false),
     pumpkinGlow: pumpkinTex(true),
     ripples: makeRipples(),
+    scales: makeScales(),
+    leaves: makeLeaves(),
   };
 }
 
