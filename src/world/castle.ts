@@ -32,6 +32,10 @@ export interface Castle {
   boatHome: THREE.Vector3;
   /** Warm light by the boathouse door. */
   boathouseLight: THREE.Vector3;
+  /** Crow perches on the boathouse roof. */
+  boathouseRidge: THREE.Vector3[];
+  /** The gate gargoyles' neck points; their turning heads are src/life/gargoyles.ts. */
+  gargoyles: THREE.Vector3[];
   lanternSpots: THREE.Vector3[];
 }
 
@@ -105,7 +109,8 @@ export function buildCastle(world: WorldData, heights: Heights, M: Materials, te
   lanternSpots.push(...viaduct(k, { a: VIA_A, b: VIA_B, spans: world.viaduct.spans }));
 
   const GATE = new V3(...world.gate.at);
-  lanternSpots.push(...gate(k, { at: GATE, stairs: world.gate.stairs, ground: (x, z) => heights.terrain(x, z), crest: tex.crest }));
+  const gateParts = gate(k, { at: GATE, stairs: world.gate.stairs, ground: (x, z) => heights.terrain(x, z), crest: tex.crest });
+  lanternSpots.push(...gateParts.lanterns);
 
   const bh = boathouse(k, heights, world.boathouse.from, world.boathouse.toward);
   lanternSpots.push(...bh.lanterns);
@@ -139,6 +144,8 @@ export function buildCastle(world: WorldData, heights: Heights, M: Materials, te
     viaduct: { a: VIA_A, b: VIA_B },
     boatHome: bh.boatHome,
     boathouseLight: bh.light,
+    boathouseRidge: bh.ridge,
+    gargoyles: gateParts.gargoyles,
     lanternSpots,
   };
 }

@@ -43,6 +43,7 @@ button{font:500 14px/1 var(--ui);color:var(--parchment);background:var(--glass);
 button:hover{background:var(--glass-strong)}
 button[aria-pressed="true"]{border-color:rgba(242,166,90,.6);color:#fff3e1}
 button[aria-pressed="true"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lamp);box-shadow:0 0 8px var(--lamp)}
+button[data-waiting]::before{content:"";width:4px;height:4px;border-radius:50%;border:1px solid var(--lamp)}
 button:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
 kbd{font:500 11px/1 var(--label);padding:3px 5px;border-radius:4px;border:1px solid var(--line);color:var(--dim)}
 .touch kbd{display:none}

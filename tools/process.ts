@@ -154,7 +154,7 @@ mkdirSync(TEX, { recursive: true });
 const manifest: Manifest = existsSync(MANIFEST)
   ? (JSON.parse(readFileSync(MANIFEST, 'utf8')) as Manifest)
   : { note: '', textures: {} };
-manifest.note = 'Written by tools/process.ts from prompts/*.yaml. Do not edit by hand.';
+manifest.note = 'Written by tools/process.ts (textures) and tools/stems.ts (stems). Do not edit by hand.';
 const specs = readSpecs();
 const ids = new Set(specs.map((s) => s.id));
 for (const id of only) if (!ids.has(id)) throw new Error(`no prompts/${id}.yaml`);

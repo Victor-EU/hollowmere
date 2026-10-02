@@ -124,6 +124,8 @@
     "wisps": { "count": 12, "min": [-260, 2, 80], "max": [-60, 6, 260], "radius": [8, 30], "speed": [0.05, 0.15] },
     "wyrm": { "center": [6, 146, -20], "radius": 56 },
     "warden": { "at": [162.5, 89], "facing": [170, 104], "reach": 20, "light": 250 },
+    "gargoyles": { "reach": 6 },
+    "crows": { "perches": [[151, 38, 58], [190, 38, 52], [170, 38, 41]], "every": [14, 36] },
     "mist": [
       { "ring": [112, 200], "y": [2, 9], "count": 28, "size": [70, 140], "aspect": 0.3, "opacity": [0.3, 0.5] },
       { "min": [-420, 2, 60], "max": [-40, 8, 360], "count": 16, "size": [90, 170], "aspect": 0.25, "opacity": [0.2, 0.38] },

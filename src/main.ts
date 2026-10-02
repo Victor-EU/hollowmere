@@ -6,6 +6,8 @@ import { Flight } from './flight/flight';
 import { Route } from './flight/route';
 import { makeBats } from './life/bats';
 import { makeCandles } from './life/candles';
+import { makeCrows } from './life/crows';
+import { makeGargoyles } from './life/gargoyles';
 import { makeGhosts } from './life/ghosts';
 import { makeLake } from './life/lake';
 import { makePumpkins } from './life/pumpkins';
@@ -111,9 +113,11 @@ async function boot() {
       M,
       ctx,
     ),
-    makeBats(world.life.bats),
+    makeBats(world.life.bats, ctx),
     makeWyrm(world, tex, ctx),
     makeWarden(world, heights, M, ctx, castle.colliders),
+    makeGargoyles(castle.gargoyles, world.life.gargoyles.reach, M, ctx),
+    makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.every, ctx),
     makeLake(world, M, castle.boatHome),
   ];
   for (const l of living) scene.add(l.object);
@@ -129,6 +133,8 @@ async function boot() {
     });
   };
   const hud = makeHud(isTouch, { toggleAuto, toggleSound });
+  // Sound can't start before a gesture; show that it will, if it was on last time.
+  hud.setSound(false, audio.wantsSound);
   const input = makeInput(canvas, isTouch, {
     toggleAuto,
     toggleSound,

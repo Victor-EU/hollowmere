@@ -10,6 +10,8 @@ export interface Boathouse {
   /** Warm light by the door. */
   light: THREE.Vector3;
   lanterns: THREE.Vector3[];
+  /** Two spots along the roof ridge, where crows sit. */
+  ridge: THREE.Vector3[];
 }
 
 /** The boathouse on the western shore, facing the lake, with a little tower and a pier. */
@@ -53,5 +55,6 @@ export function boathouse(k: Kit, heights: Heights, from: Vec2, toward: Vec2): B
     boatHome: at(10, 0, 40).setY(0),
     light: at(-2, 5, 14),
     lanterns: [at(-2, 0, 28).setY(3.8), at(-5, 6, 5.3), at(4, 6, 5.3)],
+    ridge: [at(-4, 15.2, 0), at(3, 15.2, 0)],
   };
 }

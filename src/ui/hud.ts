@@ -5,7 +5,8 @@ const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
 export interface Hud {
   update(flight: Flight, zoneLabel: string | null): void;
   setAuto(on: boolean): void;
-  setSound(on: boolean): void;
+  /** `waiting`: sound was on last visit and comes back with the first gesture. */
+  setSound(on: boolean, waiting?: boolean): void;
   toggleHelp(): void;
   /** Fade the loader out after the first frame. */
   ready(): void;
@@ -67,8 +68,10 @@ export function makeHud(isTouch: boolean, handlers: { toggleAuto(): void; toggle
     setAuto(on) {
       btnAuto.setAttribute('aria-pressed', String(on));
     },
-    setSound(on) {
+    setSound(on, waiting = false) {
       btnSound.setAttribute('aria-pressed', String(on));
+      btnSound.toggleAttribute('data-waiting', waiting && !on);
+      btnSound.title = waiting && !on ? 'Sound was on last time; it comes back with your first click or key' : '';
     },
     toggleHelp,
     ready() {

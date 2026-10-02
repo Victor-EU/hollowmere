@@ -132,6 +132,13 @@ export interface WorldData {
      * come for the lantern to follow you, and the lantern's spotlight (decay 1, like the warm lights).
      */
     warden: { at: Vec2; facing: Vec2; reach: number; light: number };
+    /** The gate gargoyles turn their heads to you within `reach` metres. */
+    gargoyles: { reach: number };
+    /**
+     * Crows, heard and not yet seen: a distant caw every `every` seconds from one of these perches
+     * (the bare trees by the gate) or the boathouse ridge.
+     */
+    crows: { perches: Vec3[]; every: Range };
     mist: MistBank[];
   };
 }

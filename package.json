@@ -13,7 +13,8 @@
     "compare": "node tools/compare.ts",
     "validate": "node tools/validate.ts",
     "generate": "node tools/generate.ts",
-    "process": "node tools/process.ts"
+    "process": "node tools/process.ts",
+    "stems": "node tools/stems.ts"
   },
   "dependencies": {
     "three": "0.186.1"

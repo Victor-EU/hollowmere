@@ -1,5 +1,5 @@
 {
-  "note": "Written by tools/process.ts from prompts/*.yaml. Do not edit by hand.",
+  "note": "Written by tools/process.ts (textures) and tools/stems.ts (stems). Do not edit by hand.",
   "textures": {
     "stone": {
       "kind": "material",
@@ -238,6 +238,70 @@
           }
         }
       }
+    }
+  },
+  "stems": {
+    "musicbox": {
+      "layer": "musicbox",
+      "variants": [
+        {
+          "opus": {
+            "file": "audio/musicbox-a.ogg",
+            "bytes": 751752
+          },
+          "aac": {
+            "file": "audio/musicbox-a.aac",
+            "bytes": 760961
+          }
+        },
+        {
+          "opus": {
+            "file": "audio/musicbox-b.ogg",
+            "bytes": 734216
+          },
+          "aac": {
+            "file": "audio/musicbox-b.aac",
+            "bytes": 741679
+          }
+        },
+        {
+          "opus": {
+            "file": "audio/musicbox-c.ogg",
+            "bytes": 518854
+          },
+          "aac": {
+            "file": "audio/musicbox-c.aac",
+            "bytes": 511153
+          }
+        }
+      ],
+      "loopStart": 1,
+      "loopLength": 96,
+      "gain": 0.0781,
+      "priority": 0,
+      "source": "score",
+      "hash": "0f66026e54b71687"
+    },
+    "choir": {
+      "layer": "choir",
+      "variants": [
+        {
+          "opus": {
+            "file": "audio/choir.ogg",
+            "bytes": 796881
+          },
+          "aac": {
+            "file": "audio/choir.aac",
+            "bytes": 1002655
+          }
+        }
+      ],
+      "loopStart": 1,
+      "loopLength": 96,
+      "gain": 0.6531,
+      "priority": 1,
+      "source": "score",
+      "hash": "5435798293d4e65c"
     }
   }
 }

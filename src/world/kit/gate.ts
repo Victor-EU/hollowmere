@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { box, matrix, prism } from './geom';
 import type { Kit } from './kit';
 import { curtainWall } from './wall';
@@ -11,7 +12,17 @@ export interface GateSpec {
   crest: THREE.Texture;
 }
 
-/** A crouching gargoyle from primitives (M4 gives the gate pair heads that turn). */
+/** Where a gargoyle's head turns, above its base. The head itself lives in src/life/gargoyles.ts. */
+export const GARGOYLE_NECK = new THREE.Vector3(0, 2, 0.45);
+
+/** A gargoyle's horned head, built round its neck and facing +z. */
+export function gargoyleHead(): THREE.BufferGeometry {
+  const head = new THREE.SphereGeometry(0.62, 10, 8).translate(0, 0.3, 0.5);
+  const horns = [-0.3, 0.3].map((hx) => new THREE.ConeGeometry(0.14, 0.9, 5).rotateX(-0.5).translate(hx, 0.9, 0.3));
+  return mergeGeometries([head, ...horns])!;
+}
+
+/** A crouching gargoyle's body and wings, from primitives. */
 function gargoyle(M: Kit['M']): THREE.Group {
   const g = new THREE.Group();
   const part = (geo: THREE.BufferGeometry, x: number, y: number, z: number) => {
@@ -21,8 +32,6 @@ function gargoyle(M: Kit['M']): THREE.Group {
     return m;
   };
   part(new THREE.SphereGeometry(1, 12, 10), 0, 1.1, 0).scale.set(1.05, 1.1, 1.3);
-  part(new THREE.SphereGeometry(0.62, 10, 8), 0, 2.3, 0.95);
-  for (const hx of [-0.3, 0.3]) part(new THREE.ConeGeometry(0.14, 0.9, 5), hx, 2.9, 0.75).rotation.x = -0.5;
   for (const wx of [-1, 1]) {
     const w = part(new THREE.ConeGeometry(0.9, 2.6, 3), wx * 0.9, 2.1, -0.4);
     w.rotation.z = -wx * 0.5;
@@ -31,12 +40,16 @@ function gargoyle(M: Kit['M']): THREE.Group {
   return g;
 }
 
-/** Gate pillars and arch, iron leaves swung open, flanking walls, and stairs down to the shore. */
-export function gate(k: Kit, gs: GateSpec): THREE.Vector3[] {
+/**
+ * Gate pillars and arch, iron leaves swung open, flanking walls, and stairs down to the shore.
+ * Returns the lantern spots, and the gargoyles' neck points (their heads face +z).
+ */
+export function gate(k: Kit, gs: GateSpec): { lanterns: THREE.Vector3[]; gargoyles: THREE.Vector3[] } {
   const { M, rand } = k;
   const G = gs.at;
   const y0 = G.y;
   const lanterns: THREE.Vector3[] = [];
+  const gargoyles: THREE.Vector3[] = [];
   const bannerMat = new THREE.MeshStandardMaterial({ name: 'banner', map: gs.crest, roughness: 0.85, side: THREE.DoubleSide });
 
   for (const sx of [-1, 1]) {
@@ -48,6 +61,7 @@ export function gate(k: Kit, gs: GateSpec): THREE.Vector3[] {
     const gg = gargoyle(M);
     gg.position.set(x, y0 + 14, G.z);
     k.addObject(gg);
+    gargoyles.push(gg.position.clone().add(GARGOYLE_NECK));
     const banner = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 5.5), bannerMat);
     banner.position.set(x, y0 + 7.5, G.z + 1.66);
     k.addObject(banner);
@@ -112,5 +126,5 @@ export function gate(k: Kit, gs: GateSpec): THREE.Vector3[] {
     y -= 0.85;
     z += 1.7;
   }
-  return lanterns;
+  return { lanterns, gargoyles };
 }

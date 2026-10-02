@@ -16,11 +16,12 @@ npm run dev
 | `npm run dev` | Dev server with hot reload |
 | `npm run build` | Typecheck, then a static build in `dist/` (relative paths, deployable anywhere) |
 | `npm run typecheck` | `tsc` over `src/` and `tools/` |
-| `npm run validate [-- <devUrl>] [--strict]` | Checks the data files and every geometry in headless Chrome, then flies the route and measures draw calls and triangles against the budgets. Starts its own dev server unless given a URL. Exits 1 on errors; `--strict` also fails on warnings and budget overruns |
+| `npm run validate [-- <devUrl>] [--strict]` | Checks the data files and every geometry in headless Chrome, flies the route and measures draw calls and triangles against the budgets, then turns sound on and checks every music stem decodes and plays. Starts its own dev server unless given a URL. Exits 1 on errors; `--strict` also fails on warnings and budget overruns |
 | `npm run shots -- <url> <outDir> [--mockup[=url]] [--views] [--clean]` | Screenshots of six fixed route points in headless Chrome; with `--mockup`, the same points from the mockup for side-by-side checks. With `--views` (dev server only), seven fixed free-camera views of the castle instead, steadier for judging materials and geometry. `--clean` hides the HUD |
 | `npm run compare -- <reference> <screenshot> [out.png]` | A screenshot beside a reference painting, each over its palette, plus the numbers the look targets talk about; see [The look](#the-look) |
 | `npm run process [-- <id>...] [--force]` | Builds the textures the app ships (`public/assets/`) from `prompts/*.yaml`; see [Textures](#textures) |
 | `npm run generate -- <id> [--n=4] [--dry-run]` | Asks OpenAI's image API for texture candidates (needs `OPENAI_API_KEY`; billed to that key) |
+| `npm run stems [-- <id>...] [--force] [--report=<dir>]` | Renders the music stems (`public/assets/audio/`) from the score, or from a composer's masters in `music/`; see [Sound](#sound) |
 
 The headless tools use the installed Google Chrome; set `CHROME` to its path if it lives elsewhere, and `ANGLE` to pick the GPU backend (`metal` on macOS by default, `swiftshader` elsewhere).
 
@@ -68,9 +69,30 @@ Everything that moves on its own is in `src/life/`; where it lives is in `data/w
 - **The wyrm** is one skinned mesh: an iron-dark hide with ember-red in the seams between scales, a hinged jaw, and bat wings with shoulder, elbow, wrist and finger bones that flap in bouts between glides. Its spine bones are laid along a loop round the keep every frame, so the body flows through the turns. It breathes fire along its path every 8–13 s. Hover above about 130 m near the keep and the next pass leans up to 20 m toward you (never nearer than 15 m, passing over or under rather than beside, gliding so the wings stay clear) while the head turns to look.
 - **Wandering ghosts** loop round their home points, now and then stopping to sway or drifting off to an idle spot (peering through a hall window, over a parapet, up the gate stairs) listed in `world.json` as offsets from home. Come within 10 m and one turns to you and nods, with a faint sigh. The two in the hall drift aside to let you through. Each wears or carries something: a hat, a lantern, a chain, a long skirt.
 - **The Lantern Warden** stands by the gate, a hooded figure woven from roots and iron with a lantern for a head. Within 20 m on its side of the gate, the lantern turns to follow you with a spotlight that throws your ghost's shadow down the stairs, and turns back over 3 s after you leave.
+- **The gate gargoyles** turn their heads, slowly, to follow you when you hover within 6 m, grinding stone on stone, and turn back when you leave.
+- **Crows** are heard but not yet seen: now and then one caws from the bare trees by the gate or the boathouse roof.
 - **Trees**: about 2,600 firs in three ragged tiers, and about 450 autumn trees in three branching shapes with leaf-cluster cards (plus a bare one that gathers by the gate). Instanced: a few draws for all of them.
 
 Shadows (`src/render/shadows.ts`): the world is static, so the moon's map is drawn once on the first frame. After that nothing casts except an invisible stand-in for your ghost, and the only map redrawn is the Warden's spotlight, while it's needed.
+
+## Sound
+
+Sound starts off, because browsers need a click before they play anything. Press **Sound** (M) and the choice is remembered on this device: if it was on last time, your first click or key brings it back, and the button shows a hollow lamp until then. It's all Web Audio, in `src/audio/`: one bus through a compressor, one shared convolution reverb, and these layers (design doc §13):
+
+- **Always**: wind over a low drone, louder and brighter with height and speed, and a distant bell about every 24 s.
+- **Music box** (everywhere) and **hall choir** (by distance to the hall, fullest inside) are composed stems: 96 s loops on one shared clock, so the music box always sits on the choir's chord. The music box has three variants and plays a different one each time round. Until a stem has downloaded and decoded, its synthesized stand-in plays, then hands over.
+- **Gate** (chains, low strings, fire crackle) and **heights** (a thin, cold wind and high glassy notes above about 100 m) are synthesized, each in its zone from `data/zones.json`.
+- **Events** are positioned and voice-limited: the wyrm's roar with its fire, and its wingbeats; a whoosh through walls; a ghost's sigh when it nods; the Warden's creak; the gargoyles' grind; bats chittering within 15 m; distant crows.
+
+```
+tools/stems/score.ts ─────────────────────── npm run stems ─▶ public/assets/audio/*.ogg, *.aac + manifest.json   (committed)
+music/<id>[-<variant>].wav  (optional masters) ─┘
+```
+
+- **Stand-ins.** Both stems are rendered from a written score in `tools/stems/score.ts` (D minor, 60 BPM, eight chords of 12 s) on two instruments in `tools/stems/instruments.ts`: a steel-comb music box, and a choir of four parts with three singers each, on "ah" and "oh". They render offline in headless Chrome, dry and mono; the game's reverb gives them their room, as it does the synth layers.
+- **Masters.** A composer's loop goes in `music/` as `musicbox-a.wav` (and `-b`, `-c`) or `choir.wav`, one 96 s cycle in D minor at 60 BPM, and `npm run stems` uses it in place of the score.
+- **Processing.** Each loop is wrapped in a second of its own end before it and its own start after (so codec delay can't put a seam in it), scaled to peak at −1 dBFS, and encoded with WebCodecs to Ogg Opus (64 kbps mono) and ADTS AAC (80 kbps, for browsers without Opus). Its gain in the manifest matches its loudness to the synth layer it replaces, so the mix keeps its balance. `--report=<dir>` writes a spectrogram of each loop. Unchanged stems are skipped.
+- **In the app.** Nothing is fetched until sound is turned on; then the stems download one at a time (about 2.7 MB) and decode as needed. Each cycle crossfades into the next over 0.12 s, because Opus never repeats quite bit for bit, and the music box keeps only the variant playing and the next one decoded.
 
 ## Textures
 
@@ -96,13 +118,13 @@ prompts/<id>.yaml ─ npm run generate ─▶ assets/raw/<id>/<candidate>.png   
 - `src/world/`: terrain, rock columns, sky, water, mist, trees, lights, and the texture library loader
 - `src/world/kit/`: the castle kit (towers, curtain walls, the great hall, the viaduct, the gate, the boathouse), assembled from `data/world.json` by `src/world/castle.ts`
 - `src/flight/`: the ghost, flight model, camera and autofly
-- `src/life/`: pumpkins, candles, wandering ghosts, bats, the wyrm, the Lantern Warden, the lake's wisps and boat
-- `src/audio/`: synthesized music and ambience, driven by the zones
+- `src/life/`: pumpkins, candles, wandering ghosts, bats, the wyrm, the Lantern Warden, the gargoyles' heads, the crows' caws, the lake's wisps and boat
+- `src/audio/`: the mix, the synthesized layers and events, the zones, and the stem player (`stems.ts`, `layers/stem.ts`)
 - `src/render/`: the two-pass scene render, bloom and grade, the look data's live hooks, and the once-drawn shadows
 - `src/ui/`: HUD, controls, touch input
 - `src/dev/`: stats overlay, free camera, route editor, look panel, geometry and data checks (left out of production builds, except the overlay behind `?stats`)
 - `prompts/`: one spec per texture, plus the style guide prepended to every prompt
-- `public/assets/`: the processed textures and their manifest
-- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), headless Chrome screenshots, validation and the reference comparison, and the dev-server endpoint the route editor and look panel save through
+- `public/assets/`: the processed textures, the music stems, and their manifest
+- `tools/`: texture generation and processing (`tools/tex/` has the stand-in generators and the encoder), the stems (`tools/stems/` has the score, the instruments and the Ogg muxer), headless Chrome screenshots, validation and the reference comparison, and the dev-server endpoint the route editor and look panel save through
 
-No analytics, no cookies, no network calls after load. The one local-storage key is the sound preference (dev builds also remember whether the stats overlay is open).
+No analytics, no cookies, and no network calls after load except the music, fetched from the same site once you turn sound on. The one local-storage key is the sound preference (dev builds also remember whether the stats overlay is open).

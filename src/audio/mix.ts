@@ -7,12 +7,14 @@ import { Gate } from './layers/gate';
 import { Heights } from './layers/heights';
 import type { Layer } from './layers/layer';
 import { MusicBox } from './layers/musicbox';
+import { Scored, type Clock } from './layers/stem';
 import { clamp, smoothstep } from './math';
 import { chain, gainNode } from './nodes';
 import { createNoiseBank } from './noise';
 import { Smoothed } from './params';
 import { createReverb } from './reverb';
 import { Scheduler } from './scheduler';
+import type { StemLibrary } from './stems';
 import type { AudioEventType, ListenerState } from './types';
 import { zoneDistance, zoneGain, type Point3 } from './zones';
 
@@ -29,23 +31,40 @@ interface ZoneSlot {
   quiet: number;
 }
 
+/** What's playing, for tests and the console. */
+export interface MixStatus {
+  /** 'synth', 'loading', or 'stem <variant>'; the choir is 'asleep' outside its zones. */
+  musicbox: string;
+  choir: string;
+  /** Layers whose stems have decoded. */
+  loaded: string[];
+  /** 'opus' or 'aac', and any stem files that failed to fetch or decode. */
+  format: string;
+  failed: string[];
+}
+
 /**
  * The audio graph for one context:
  *   layer → fader → bus → compressor → master (the on/off fade) → speakers
  *   fader → send → shared reverb → bus
+ * The music box and the choir are scored: composed stems once they've loaded, synth until then.
  */
 export class Mix {
   readonly ctx: AudioContext;
   readonly scheduler: Scheduler;
   private readonly master: GainNode;
   private readonly base: BaseLayer;
+  private readonly music: Scored;
+  private readonly choir: Scored;
+  private readonly library: StemLibrary;
   private readonly layers: Layer[];
   private readonly zoned: ZoneSlot[];
   private readonly events: EventPlayer;
   private readonly zones: Record<AudioLayerName, Zone[]> = { choir: [], gate: [], heights: [] };
 
-  constructor(ctx: AudioContext, zones: Zone[]) {
+  constructor(ctx: AudioContext, zones: Zone[], library: StemLibrary) {
     this.ctx = ctx;
+    this.library = library;
     for (const z of zones) if (z.layer) this.zones[z.layer].push(z);
     const noise = createNoiseBank(ctx);
 
@@ -71,14 +90,18 @@ export class Mix {
     });
 
     // Music box and choir play dry at 0.35 with the full signal sent to the reverb, as in the mockup.
+    // Their stems are loudness-matched to these synth levels by tools/stems.ts.
+    const clock: Clock = { t0: null };
     this.base = new BaseLayer(ctx, noise, 1);
-    const music = new MusicBox(ctx, noise, 0.35);
+    const music = new Scored(ctx, noise, new MusicBox(ctx, noise, 0.35), library, clock, 'musicbox');
     const bell = new Bell(ctx, noise, 1);
     mount(this.base, 1, 1);
     mount(music, 1 / 0.35, 1);
     mount(bell, 1, 1);
+    this.music = music;
+    this.choir = new Scored(ctx, noise, new Choir(ctx, noise, 0.35), library, clock, 'choir');
     this.zoned = [
-      zoned(new Choir(ctx, noise, 0.35), 'choir', 1 / 0.35),
+      zoned(this.choir, 'choir', 1 / 0.35),
       zoned(new Gate(ctx, noise, 1), 'gate', 0.5),
       zoned(new Heights(ctx, noise, 1), 'heights', 0.7),
     ];
@@ -93,6 +116,17 @@ export class Mix {
     this.scheduler = new Scheduler(ctx, (now, until) => {
       for (const l of this.layers) if (l.running) l.schedule(now, until);
     });
+    void library.prefetch();
+  }
+
+  status(): MixStatus {
+    return {
+      musicbox: this.music.mode,
+      choir: this.choir.running ? this.choir.mode : 'asleep',
+      loaded: [this.music.loaded && 'musicbox', this.choir.loaded && 'choir'].filter((s): s is string => !!s),
+      format: this.library.format,
+      failed: [...this.library.failed],
+    };
   }
 
   /** Master in over ~2 s, out over ~0.4 s. */

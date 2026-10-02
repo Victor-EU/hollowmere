@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import type { Vec3 } from '../data';
 import { range, rng } from '../world/math';
-import type { Living } from './types';
+import type { LifeContext, Living } from './types';
+
+/** A bat this near chitters (design doc §10). */
+const CHITTER = 15;
 
 /** Flocks of flat two-wing bats circling the towers. Two instanced draws for all of them. */
-export function makeBats(flocks: { center: Vec3; count: number }[]): Living {
+export function makeBats(flocks: { center: Vec3; count: number }[], ctx: LifeContext): Living {
   const rand = rng(909);
   const rr = (a: number, b: number) => range(rand, a, b);
   const wing = (() => {
@@ -33,12 +36,15 @@ export function makeBats(flocks: { center: Vec3; count: number }[]): Living {
   }
 
   const d = new THREE.Object3D();
+  const nearest = new THREE.Vector3();
+  let quiet = 0;
   const m = new THREE.Matrix4();
   const mr = new THREE.Matrix4();
   const mirror = new THREE.Matrix4().makeScale(-1, 1, 1);
   return {
     object: group,
-    update(_dt, time) {
+    update(dt, time) {
+      let best = CHITTER * CHITTER;
       bats.forEach((b, i) => {
         const a = b.ph + time * b.w;
         const x = b.c.x + Math.cos(a) * b.r + Math.sin(time * 0.6 + b.ph) * 6;
@@ -47,6 +53,11 @@ export function makeBats(flocks: { center: Vec3; count: number }[]): Living {
         const vx = -Math.sin(a) * b.w;
         const vz = Math.cos(a) * b.w * 0.8;
         d.position.set(x, y, z);
+        const d2 = d.position.distanceToSquared(ctx.player);
+        if (d2 < best) {
+          best = d2;
+          nearest.copy(d.position);
+        }
         d.rotation.set(0, Math.atan2(vx, vz), Math.sin(time * 2 + b.ph) * 0.3);
         d.scale.setScalar(b.s);
         d.updateMatrix();
@@ -59,6 +70,12 @@ export function makeBats(flocks: { center: Vec3; count: number }[]): Living {
         left.setMatrixAt(i, m);
       });
       right.instanceMatrix.needsUpdate = left.instanceMatrix.needsUpdate = true;
+      // Now and then, while one is close.
+      quiet -= dt;
+      if (best < CHITTER * CHITTER && quiet <= 0) {
+        ctx.sound('chitter', nearest);
+        quiet = range(rand, 1.2, 3.5);
+      }
     },
   };
 }

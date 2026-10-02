@@ -1,5 +1,6 @@
 import type { Zone } from '../data';
-import { Mix } from './mix';
+import { Mix, type MixStatus } from './mix';
+import { StemLibrary } from './stems';
 import type { AudioEventType, ListenerState } from './types';
 import type { Point3 } from './zones';
 
@@ -78,6 +79,11 @@ export class AudioEngine {
     if (this.enabled && !this.paused && this.mix) this.mix.trigger(type, at, this.listener);
   }
 
+  /** What's playing; null before sound has first been turned on. */
+  status(): MixStatus | null {
+    return this.mix?.status() ?? null;
+  }
+
   /** Tab hidden / shown: suspend and resume the context. */
   setPaused(paused: boolean): void {
     if (paused === this.paused) return;
@@ -103,7 +109,7 @@ export class AudioEngine {
         return false;
       }
       unlock(ctx);
-      this.mix = new Mix(ctx, this.zones);
+      this.mix = new Mix(ctx, this.zones, new StemLibrary(ctx, new URL('assets/', document.baseURI)));
     }
     window.clearTimeout(this.suspendTimer);
     this.enabled = true;
