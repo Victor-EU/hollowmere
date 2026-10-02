@@ -75,8 +75,7 @@
     "pumpkins": {
       "clouds": [
         { "min": [150, 37, 52], "max": [194, 62, 96], "count": 30, "scale": [1.1, 2.0] },
-        { "min": [32, 46, 26], "max": [60, 72, 64], "count": 12, "scale": [1.1, 1.8] },
-        { "min": [-32, 52, 37], "max": [22, 60, 51], "count": 6, "scale": [0.9, 1.3] }
+        { "min": [32, 46, 26], "max": [60, 72, 64], "count": 12, "scale": [1.1, 1.8] }
       ],
       "giant": { "at": [172, 52, 83], "scale": 4.2 },
       "viaduct": { "count": 12, "rise": [5, 16], "spread": 4, "scale": [1, 1.7] }
@@ -85,7 +84,8 @@
     "bats": [
       { "center": [-50, 112, 4], "count": 40 },
       { "center": [6, 150, -20], "count": 30 },
-      { "center": [160, 70, 70], "count": 20 }
+      { "center": [160, 70, 70], "count": 20 },
+      { "center": [-5, 60, 44], "count": 12, "radius": [3, 8], "rise": 2 }
     ],
     "ghosts": [
       {
@@ -125,7 +125,32 @@
     "wyrm": { "center": [6, 146, -20], "radius": 56 },
     "warden": { "at": [162.5, 89], "facing": [170, 104], "reach": 20, "light": 250 },
     "gargoyles": { "reach": 6 },
-    "crows": { "perches": [[151, 38, 58], [190, 38, 52], [170, 38, 41]], "every": [14, 36] },
+    "crows": {
+      "perches": [[155.85, 38.45, 86.79], [161.55, 38.45, 86.79], [188.15, 38.45, 86.79]],
+      "ground": [
+        { "center": [166, 112], "radius": 6, "count": 6 },
+        { "center": [196, 136], "radius": 5, "count": 4 }
+      ],
+      "every": [14, 36]
+    },
+    "animals": {
+      "$comment": "Below the gate stairs, where autofly comes down low: two deer herds, a wolf pack on the rise, foxes on their round, hares. Cats: on the gate wall's parapet, the pier's end, and a hall window sill.",
+      "deer": [
+        { "center": [186, 150], "radius": 26, "count": 7, "stags": 1 },
+        { "center": [222, 112], "radius": 20, "count": 5, "stags": 1 }
+      ],
+      "wolves": [{ "center": [228, 186], "radius": 12, "count": 5 }],
+      "foxes": [{ "path": [[152, 104], [178, 120], [198, 158], [176, 184], [150, 150]], "count": 2 }],
+      "hares": [
+        { "center": [160, 124], "radius": 16, "count": 5 },
+        { "center": [204, 170], "radius": 14, "count": 4 }
+      ],
+      "cats": [
+        { "at": [183.9, 37.25, 86.8], "yaw": 0 },
+        { "at": [-166.8, 1.2, -21.1], "yaw": -0.16 },
+        { "at": [-13.6, 44.0, 55.75], "yaw": 0 }
+      ]
+    },
     "mist": [
       { "ring": [112, 200], "y": [2, 9], "count": 28, "size": [70, 140], "aspect": 0.3, "opacity": [0.3, 0.5] },
       { "min": [-420, 2, 60], "max": [-40, 8, 360], "count": 16, "size": [90, 170], "aspect": 0.25, "opacity": [0.2, 0.38] },

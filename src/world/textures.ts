@@ -150,6 +150,151 @@ function makeCrest() {
   );
 }
 
+/** Five hall banners side by side (128 x 320 each): the castle's crest, then a bat, a jack-o'-lantern, a spider and a moon. */
+function makeHallBanners() {
+  const gold = '#d8a944';
+  const fields = ['#4a0d12', '#2c1440', '#141016', '#0f2a26', '#101a3a'];
+  return canvasTex(
+    640,
+    320,
+    (g) => {
+      fields.forEach((field, i) => {
+        g.save();
+        g.translate(i * 128, 0);
+        // Field with a swallowtail of points at the foot, and a gilt border.
+        g.fillStyle = field;
+        g.fillRect(0, 0, 128, 296);
+        for (let x = 0; x < 128; x += 16) {
+          g.beginPath();
+          g.moveTo(x, 296);
+          g.lineTo(x + 8, 320);
+          g.lineTo(x + 16, 296);
+          g.fill();
+        }
+        g.strokeStyle = '#c99a3e';
+        g.lineWidth = 4;
+        g.strokeRect(8, 8, 112, 280);
+        g.fillStyle = gold;
+        g.strokeStyle = gold;
+        const disc = (x: number, y: number, r: number) => {
+          g.beginPath();
+          g.arc(x, y, r, 0, Math.PI * 2);
+          g.fill();
+        };
+        if (i === 0) {
+          // The castle's crest: a crescent over three spires.
+          disc(64, 100, 34);
+          g.fillStyle = field;
+          disc(78, 92, 30);
+          g.fillStyle = gold;
+          for (const [x, hh] of [[36, 70], [64, 100], [92, 70]]) {
+            g.fillRect(x - 7, 240 - hh + 20, 14, hh - 20);
+            g.beginPath();
+            g.moveTo(x - 10, 240 - hh + 22);
+            g.lineTo(x, 240 - hh - 14);
+            g.lineTo(x + 10, 240 - hh + 22);
+            g.fill();
+          }
+          g.fillRect(24, 240, 80, 8);
+        } else if (i === 1) {
+          // A bat, wings spread.
+          g.beginPath();
+          g.moveTo(64, 120);
+          for (const [x, y] of [[80, 112], [96, 98], [118, 104], [112, 124], [104, 140], [92, 134], [84, 150], [72, 142], [64, 158]]) g.lineTo(x, y);
+          for (const [x, y] of [[56, 142], [44, 150], [36, 134], [24, 140], [16, 124], [10, 104], [32, 98], [48, 112]]) g.lineTo(x, y);
+          g.closePath();
+          g.fill();
+          disc(64, 116, 11);
+          g.beginPath();
+          g.moveTo(56, 108);
+          g.lineTo(58, 96);
+          g.lineTo(62, 106);
+          g.moveTo(72, 108);
+          g.lineTo(70, 96);
+          g.lineTo(66, 106);
+          g.fill();
+          g.fillRect(36, 220, 56, 6);
+        } else if (i === 2) {
+          // A jack-o'-lantern: ribs, a stem, a carved face in the field's colour.
+          g.fillStyle = '#c4621a';
+          for (const [dx, rx] of [[-22, 26], [22, 26], [0, 30]]) {
+            g.beginPath();
+            g.ellipse(64 + dx, 140, rx, 38, 0, 0, Math.PI * 2);
+            g.fill();
+          }
+          g.fillStyle = '#3b3a1a';
+          g.fillRect(60, 92, 8, 14);
+          g.fillStyle = '#f2b347';
+          for (const s of [-1, 1]) {
+            g.beginPath();
+            g.moveTo(64 + s * 8, 132);
+            g.lineTo(64 + s * 26, 132);
+            g.lineTo(64 + s * 17, 116);
+            g.fill();
+          }
+          g.beginPath();
+          g.moveTo(38, 150);
+          for (let k = 0; k <= 8; k++) g.lineTo(38 + k * 6.5, k % 2 ? 158 : 166);
+          g.lineTo(90, 150);
+          g.quadraticCurveTo(64, 176, 38, 150);
+          g.fill();
+          g.fillStyle = gold;
+          g.fillRect(36, 220, 56, 6);
+        } else if (i === 3) {
+          // A spider hanging on its thread from a web.
+          g.lineWidth = 2;
+          for (let k = 0; k < 6; k++) {
+            g.beginPath();
+            g.moveTo(64, 30);
+            g.lineTo(64 + Math.cos((k / 5) * Math.PI) * 50, 30 + Math.sin((k / 5) * Math.PI) * 50);
+            g.stroke();
+          }
+          for (const rr of [18, 32, 46]) {
+            g.beginPath();
+            g.arc(64, 30, rr, 0, Math.PI);
+            g.stroke();
+          }
+          g.beginPath();
+          g.moveTo(64, 30);
+          g.lineTo(64, 128);
+          g.stroke();
+          disc(64, 150, 18);
+          disc(64, 126, 10);
+          g.lineWidth = 4;
+          for (const s of [-1, 1]) {
+            for (let k = 0; k < 4; k++) {
+              g.beginPath();
+              g.moveTo(64 + s * 10, 140 + k * 6);
+              g.lineTo(64 + s * 34, 124 + k * 14);
+              g.lineTo(64 + s * 42, 146 + k * 16);
+              g.stroke();
+            }
+          }
+          g.fillRect(36, 220, 56, 6);
+        } else {
+          // A crescent moon among stars.
+          disc(58, 120, 40);
+          g.fillStyle = field;
+          disc(76, 108, 36);
+          g.fillStyle = gold;
+          for (const [x, y, r] of [[96, 70, 5], [30, 190, 4], [100, 170, 6], [44, 60, 3], [84, 208, 3]]) {
+            g.beginPath();
+            for (let k = 0; k < 10; k++) {
+              const a = (k / 10) * Math.PI * 2 - Math.PI / 2;
+              const rad = k % 2 ? r * 0.45 : r * 1.6;
+              g.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad);
+            }
+            g.fill();
+          }
+          g.fillRect(36, 236, 56, 6);
+        }
+        g.restore();
+      });
+    },
+    { repeat: false },
+  );
+}
+
 function makeWeb() {
   return canvasTex(
     512,
@@ -394,6 +539,7 @@ export function makeTextures(maxAnisotropy: number) {
     cloud: softTex(160, 4, 23, 2),
     moon: makeMoon(),
     crest: makeCrest(),
+    hallBanners: makeHallBanners(),
     web: makeWeb(),
     pumpkin: pumpkinTex(false),
     pumpkinGlow: pumpkinTex(true),

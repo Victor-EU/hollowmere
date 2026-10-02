@@ -123,7 +123,8 @@ export interface WorldData {
       viaduct: { count: number; rise: Range; spread: number; scale: Range };
     };
     candles: number;
-    bats: { center: Vec3; count: number }[];
+    /** Each flock circles its centre, 14–60 m out and within 22 m up or down unless it says otherwise. */
+    bats: { center: Vec3; count: number; radius?: Range; rise?: number }[];
     ghosts: GhostGroup[];
     wisps: { count: number; min: Vec3; max: Vec3; radius: Range; speed: Range };
     wyrm: { center: Vec3; radius: number };
@@ -135,12 +136,26 @@ export interface WorldData {
     /** The gate gargoyles turn their heads to you within `reach` metres. */
     gargoyles: { reach: number };
     /**
-     * Crows, heard and not yet seen: a distant caw every `every` seconds from one of these perches
-     * (the bare trees by the gate) or the boathouse ridge.
+     * Crows on these perches (the merlons of the gate's walls; the boathouse ridge comes from the castle)
+     * and in flocks on the ground. Now and then one within earshot caws, every `every` seconds.
      */
-    crows: { perches: Vec3[]; every: Range };
+    crows: { perches: Vec3[]; ground: { center: Vec2; radius: number; count: number }[]; every: Range };
+    animals: AnimalsData;
     mist: MistBank[];
   };
+}
+
+/**
+ * Animals on the ground (design doc §10). Centres and round-trip paths are [x, z]; animals keep to
+ * open, dry, gentle ground within `radius` of their centre (further when they run from you).
+ */
+export interface AnimalsData {
+  deer: { center: Vec2; radius: number; count: number; stags: number }[];
+  wolves: { center: Vec2; radius: number; count: number }[];
+  foxes: { path: Vec2[]; count: number }[];
+  hares: { center: Vec2; radius: number; count: number }[];
+  /** Black cats: where each sits, and which way it faces. */
+  cats: { at: Vec3; yaw: number }[];
 }
 
 /** data/look.json: how the world looks. Colours are sRGB hex; tuned live with the dev look panel. */

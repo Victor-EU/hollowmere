@@ -1,5 +1,5 @@
 import { mtof, pick, rand } from '../math';
-import { chain, strike, type Overtone } from '../nodes';
+import { strike, type Overtone } from '../nodes';
 import { Layer } from './layer';
 
 // D6, F6, A6 alone or in short falling/rising figures.
@@ -10,19 +10,12 @@ const GLASS: readonly Overtone[] = [
   [5.4, 0.08, 0.35],
 ];
 
-/** Above ~100 m: a thin, cold, high-passed wind and sparse high bell notes. Kept under the choir. */
+/** Above ~100 m: sparse high bell notes, kept under the choir. */
 export class Heights extends Layer {
   private next = 0;
   private notes: GainNode | null = null;
 
   protected build(t: number): void {
-    const bp = this.filter('bandpass', 2600, 1.2);
-    const gust = this.gain(0.55);
-    chain(this.loop(this.noise.white, t), this.filter('highpass', 1400, 0), bp, gust, this.gain(0.06), this.output);
-    this.lfo(0.06, 900, t, bp.frequency);
-    this.lfo(0.11, 0.2, t, gust.gain);
-    this.lfo(0.037, 0.15, t, gust.gain);
-
     this.notes = this.gain(1);
     this.notes.connect(this.output);
     this.next = t + rand(3, 6);

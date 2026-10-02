@@ -7,7 +7,7 @@ import type { LifeContext, Living } from './types';
 const CHITTER = 15;
 
 /** Flocks of flat two-wing bats circling the towers. Two instanced draws for all of them. */
-export function makeBats(flocks: { center: Vec3; count: number }[], ctx: LifeContext): Living {
+export function makeBats(flocks: { center: Vec3; count: number; radius?: [number, number]; rise?: number }[], ctx: LifeContext): Living {
   const rand = rng(909);
   const rr = (a: number, b: number) => range(rand, a, b);
   const wing = (() => {
@@ -31,7 +31,7 @@ export function makeBats(flocks: { center: Vec3; count: number }[], ctx: LifeCon
   for (const f of flocks) {
     const c = new THREE.Vector3(...f.center);
     for (let i = 0; i < f.count; i++) {
-      bats.push({ c, r: rr(14, 60), h: rr(-22, 22), w: rr(0.3, 0.7) * (rand() < 0.5 ? -1 : 1), ph: rand() * 6.28, fl: rr(9, 13), s: rr(0.9, 1.5) });
+      bats.push({ c, r: rr(...(f.radius ?? [14, 60])), h: rr(-(f.rise ?? 22), f.rise ?? 22), w: rr(0.3, 0.7) * (rand() < 0.5 ? -1 : 1), ph: rand() * 6.28, fl: rr(9, 13), s: rr(0.9, 1.5) });
     }
   }
 

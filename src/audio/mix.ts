@@ -8,7 +8,6 @@ import { Heights } from './layers/heights';
 import type { Layer } from './layers/layer';
 import { MusicBox } from './layers/musicbox';
 import { Scored, type Clock } from './layers/stem';
-import { clamp, smoothstep } from './math';
 import { chain, gainNode } from './nodes';
 import { createNoiseBank } from './noise';
 import { Smoothed } from './params';
@@ -143,7 +142,6 @@ export class Mix {
   update(l: ListenerState, dt: number): void {
     const t = this.ctx.currentTime;
     const p = l.position;
-    this.base.steer(smoothstep(40, 200, p.y), clamp(l.speed / 30, 0, 1), t);
     for (const s of this.zoned) {
       const target = this.target(s.zone, p);
       s.fader.set(target, t);

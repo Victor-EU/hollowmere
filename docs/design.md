@@ -69,7 +69,7 @@ Two generated paintings so far, and the board is open to more. Neither is shippe
 2. **Autofly** drifts low over the water, rises up the cliff, and passes *through* the great hall's stained glass into a hall of floating candles. It then exits east along the viaduct, sweeps through the jack-o'-lantern courtyard, passes the gate and its gargoyles, climbs to the keep's spires beside the dragon, and swings out over the lake to start again. One loop takes about 2.5 minutes.
 3. **Take over** at any time: drag to look, keys or stick to move. Looking alone does not cancel autofly. You can look around while it carries you.
 4. **Let go.** After 12 seconds without movement input, autofly fades back in from the nearest point on the route.
-5. **Sound** starts with the first tap on the Sound button (browsers require a gesture). Wind and drone are always present. A choir rises as you near the hall, and the dragon's roar arrives with its fire.
+5. **Sound** starts with the first tap on the Sound button (browsers require a gesture). A low drone is always present. A choir rises as you near the hall, and the dragon's roar arrives with its fire.
 
 ### Points of interest (the "beautiful places")
 
@@ -290,12 +290,28 @@ All creatures are original designs. None may resemble a character from a film, b
 - **Sound.** Faint wind chime for wisps; creak and lapping for the boat.
 - **Cost.** One sprite batch, one small mesh group, one point light.
 
-### Black cats (3) and crows (6)
-- **Look.** Cats: sleek, yellow-eyed, sitting on the gate wall, the pier post and a hall window sill. Crows: on the bare trees by the gate and on the boathouse ridge.
-- **Behavior.** Mostly still. A cat grooms or flicks its tail every 10–20 s; a crow hops or ruffles.
-- **Reacts.** A cat's eyes track you and glow brighter as you near; it never moves off its perch. Crows take off when you pass within 5 m, circle once, land again.
-- **Sound.** One crow caw per takeoff; cats are silent.
-- **Cost.** Two small meshes, instanced.
+### Black cats (3) and crows (15)
+- **Look.** Cats: sleek, yellow-eyed, sitting on the gate wall's parapet, the end of the pier and a hall window sill, about twice life size. Crows: raven-sized, on the merlons of the gate's walls (the bare trees are scattered procedurally, so there was no branch to land on) and the boathouse ridge, and in two flocks on the ground below the gate stairs.
+- **Behavior.** Cats are still, with a flick of the tail every 8–18 s. Crows on the ground peck and hop.
+- **Reacts.** A cat's head and eyes track you within 30 m and its eyes glow brighter as you near; it never moves off its perch. Crows take off when you pass within 8 m, circle once or twice, land again.
+- **Sound.** One crow caw per takeoff, and a stray caw now and then; cats are silent.
+- **Cost.** One instanced draw each (src/life/rig.ts).
+
+### The valley's animals (12 deer, 5 wolves, 2 foxes, 9 hares)
+Added at launch: the ground away from the castle read as empty. Based on red deer, grey wolves, red foxes and hares, stylised and scaled up with the world (deer elk-sized, the wolves dire wolves) so they read from autofly's height.
+- **Look.** Built from rig parts: two-tone coats, a deer stag's antlers, the wolves dark with a ruff, the fox rust with a white-tipped brush, the hares pale with black ear tips. Eyes shine back at the camera when a head turns toward it.
+- **Behavior.** In the valley below the gate stairs, where autofly comes down low. Deer graze in two herds and wander, lifting their heads to look round; the wolves rest and trot about a rise, and the pack howls at the moon together every 22–45 s; foxes trot a round, stopping to sniff; hares feed and hop. They keep to open, dry, gentle ground.
+- **Reacts.** Within notice range (30–80 m) they stop and watch you, the head following you. Come close (12–26 m) and they run: deer bound away flashing white tails, hares jink, foxes bolt, wolves only trot off. Nothing ever comes toward you.
+- **Sound.** None (synthesized howls would sound like the wind that was cut).
+- **Cost.** One instanced draw per kind and one for all the eyes; not drawn past about 420 m.
+
+### The feast in the great hall
+Added at launch, to make the hall grand. Based on the medieval great-hall feast and the folk of Halloween. Deliberately not any particular film's banquet: no house banners or crests, no sorting, no enchanted ceiling. The banners carry the castle's own crest and Halloween sigils.
+- **Look.** About 150 guests (fewer on the low tier) at four long tables: skeletons, witches, vampires, werewolves, mummies, pumpkin-heads and translucent ghosts. At the high table, a headless host on the throne holds up his own glowing jack-o'-lantern head (the headless horseman of folklore, seated), among a crowned skeleton and a lord of each other kind. Tables in red linen (velvet at the high table) laid with plates, goblets, roasts, pies, fruit, cakes, skull candles and little green-glowing cauldrons; iron wheel chandeliers, torches and banners on the piers; cart-sized jack-o'-lanterns; a witch stirring a great green cauldron before the dais; bats under the roof.
+- **Behavior.** Guests chat with their neighbours, drink, eat and laugh.
+- **Reacts.** Within 16 m they turn to watch you; within 7 m they raise their goblets to you. The host's head flares as you come near; the witch looks up from her pot.
+- **Sound.** The hall's choir; nothing new.
+- **Cost.** About 30 draws and 240k triangles (fewer guests on the low tier), drawn only while the camera is in the hall. While it is, nothing outdoors is drawn, since the walls and glass hide it.
 
 ### Witch silhouette (event, not a creature you can reach)
 - **Look.** A flat black silhouette on a broom, far away.
@@ -352,12 +368,12 @@ A loading state never blocks flight. Low-resolution textures swap to high resolu
 
 | Layer | Content | Behavior |
 |---|---|---|
-| Base | Wind and low drone | Always on. Wind rises with altitude and speed. |
+| Base | Low drone | Always on. (Synthesized wind that rose with speed was cut at launch: it sounded like machinery.) |
 | Music box | Slow D-minor melody | Global. Varies across loops. |
 | Bell | Distant toll every about 24 s | Global, heavy reverb |
 | Hall choir | Wordless "ah" pad | Gain by distance to the hall; fullest inside |
 | Gate | Chains, low strings, crackle | Zone around the courtyard |
-| Heights | Thinner, colder wind; sparse high notes | Above about 100 m |
+| Heights | Sparse high notes | Above about 100 m |
 | Events | Dragon roar with fire, whoosh through walls, distant caw | Triggered, attenuated by distance |
 
 **Implementation.**

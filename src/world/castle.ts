@@ -26,7 +26,7 @@ export interface Castle {
   group: THREE.Group;
   colliders: Colliders;
   gate: THREE.Vector3;
-  hall: { x0: number; x1: number; z0: number; z1: number; y0: number; wallH: number; ridge: number; cx: number; cz: number };
+  hall: { x0: number; x1: number; z0: number; z1: number; y0: number; wallH: number; ridge: number; bays: number; cx: number; cz: number };
   viaduct: { a: THREE.Vector3; b: THREE.Vector3 };
   /** Where the lantern boat circles. */
   boatHome: THREE.Vector3;
@@ -98,10 +98,11 @@ export function buildCastle(world: WorldData, heights: Heights, M: Materials, te
     y0: hw.floor,
     wallH: hw.wallHeight,
     ridge: hw.ridge,
+    bays: hw.bays,
     cx: (hw.x[0] + hw.x[1]) / 2,
     cz: (hw.z[0] + hw.z[1]) / 2,
   };
-  greatHall(k, { ...HALL, bays: hw.bays });
+  greatHall(k, HALL);
   colliders.box.push({ cx: HALL.cx, cz: HALL.cz, rot: 0, hl: (HALL.x1 - HALL.x0) / 2, ht: (HALL.z1 - HALL.z0) / 2, y0: HALL.y0, y1: HALL.y0 + HALL.wallH, hall: true });
 
   const VIA_A = new V3(...world.viaduct.from);

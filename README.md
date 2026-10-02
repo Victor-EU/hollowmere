@@ -23,7 +23,7 @@ Autofly takes over again 12 seconds after you let go. Links can start you somewh
 
 ## The place
 
-The family who built the castle on the cliff kept a lamp in every window, so the boats on the Mere could find the shore at night, and when the last of them died the lamps went on burning anyway. The Hollow Hall is lit by a hundred and fifty candles nobody lights. The Lantern Warden, roots and iron with a lantern for a head, stands at the Warden's Gate and turns to watch whatever drifts up the Candle Stair. Something with wings has made its roost on Wyrmspire, the highest tower, and breathes fire over the keep when it circles. The ghosts who wander the grounds don't remember who they were. Neither do you.
+The family who built the castle on the cliff kept a lamp in every window, so the boats on the Mere could find the shore at night, and when the last of them died the lamps went on burning anyway. The Hollow Hall is lit by a hundred and fifty candles nobody lights, and on All Hallows' Eve the castle's dead and their guests sit down to a feast there, under a host who carries his head. The Lantern Warden, roots and iron with a lantern for a head, stands at the Warden's Gate and turns to watch whatever drifts up the Candle Stair. Something with wings has made its roost on Wyrmspire, the highest tower, and breathes fire over the keep when it circles. The ghosts who wander the grounds don't remember who they were. Neither do you.
 
 ## Accessibility
 
@@ -108,8 +108,14 @@ Everything that moves on its own is in `src/life/`; where it lives is in `data/w
 - **Wandering ghosts** loop round their home points, now and then stopping to sway or drifting off to an idle spot (peering through a hall window, over a parapet, up the gate stairs) listed in `world.json` as offsets from home. Come within 10 m and one turns to you and nods, with a faint sigh. The two in the hall drift aside to let you through. Each wears or carries something: a hat, a lantern, a chain, a long skirt.
 - **The Lantern Warden** stands by the gate, a hooded figure woven from roots and iron with a lantern for a head. Within 20 m on its side of the gate, the lantern turns to follow you with a spotlight that throws your ghost's shadow down the stairs, and turns back over 3 s after you leave.
 - **The gate gargoyles** turn their heads, slowly, to follow you when you hover within 6 m, grinding stone on stone, and turn back when you leave.
-- **Crows** are heard but not yet seen: now and then one caws from the bare trees by the gate or the boathouse roof.
+- **Crows** sit on the merlons of the gate's walls and the boathouse ridge, and peck about in flocks below the gate stairs. Pass within 8 m and they go up with a caw, circle once or twice and settle again.
+- **Animals** live in the valley below the gate stairs, where autofly comes down low: two herds of deer (each with an antlered stag) that graze, lift their heads to watch you and bound away if you come close, flashing white tails; a wolf pack that watches you, eyes shining, and now and then howls at the moon together; foxes trotting a round, stopping to sniff; and hares that freeze, then jink away. Black cats sit on the gate wall's parapet, at the end of the pier and on a hall window sill; their yellow eyes follow you and brighten as you come. They're bigger than life, like everything here, so they read from the air, and their eyes shine back at the camera. None of them ever comes toward you.
+- **The feast** fills the great hall. About a hundred and fifty guests sit at the four long tables: skeletons, witches, vampires, werewolves, mummies, pumpkin-heads and ghosts. At the high table on the dais, the headless host on his throne holds up his own glowing jack-o'-lantern head, among a crowned skeleton, a vampire, a witch, a werewolf, a mummy and a pumpkin-head. The tables are dressed in red linen (velvet for the high table) and laid with plates and goblets, roasts, pies, fruit, cakes, candles on skulls and little cauldrons of something green. Iron wheel chandeliers hang from the trusses, torches and banners (the castle's crest of a crescent over three spires, a bat, a jack-o'-lantern, a spider, a moon) line the walls between the windows, jack-o'-lanterns the size of carts flank the dais and the west door, bats wheel under the roof, and before the dais a witch stirs a great cauldron, green and steaming, over a log fire. The guests chat, drink, eat and laugh; as you fly over they turn to watch you go by, and those you pass near raise their goblets to you. Autofly flies through at 7 m, between their heads and the chandeliers. The feast is laid on the same layout the hall's furniture is built from (`hallLayout` in `src/world/kit/hall.ts`), is built just after the first frame, and is only drawn while the camera is in the hall.
 - **Trees**: about 2,600 firs in three ragged tiers, and about 450 autumn trees in three branching shapes with leaf-cluster cards (plus a bare one that gathers by the gate). Instanced: a few draws for all of them.
+
+The animals and the feast's guests are built from simple parts (ellipsoids, tapered limbs, cones) hanging from joints, posed in the vertex shader (`src/life/rig.ts`): each kind is one geometry and one instanced draw, every member in its own pose. The bodies are in `src/life/beasts.ts` and `src/life/guests.ts`. Life that isn't in the opening shot (the animals, the crows, the feast) is built just after the first frame, so it can't hold that up.
+
+Inside the great hall, the walls and the stained glass hide the whole outdoors, so from in there it isn't drawn: the land, the trees, the lake and its reflection, and everything living outside. Its lights stay, since a change in their number would recompile every shader on the way in.
 
 Shadows (`src/render/shadows.ts`): the world is static, so the moon's map is drawn once on the first frame. After that nothing casts except an invisible stand-in for your ghost, and the only map redrawn is the Warden's spotlight, while it's needed.
 
@@ -117,9 +123,9 @@ Shadows (`src/render/shadows.ts`): the world is static, so the moon's map is dra
 
 Sound starts off, because browsers need a click before they play anything. Press **Sound** (M) and the choice is remembered on this device: if it was on last time, your first click or key brings it back, and the button shows a hollow lamp until then. It's all Web Audio, in `src/audio/`: one bus through a compressor, one shared convolution reverb, and these layers (design doc §13):
 
-- **Always**: wind over a low drone, louder and brighter with height and speed, and a distant bell about every 24 s.
+- **Always**: a low drone and a distant bell about every 24 s.
 - **Music box** (everywhere) and **hall choir** (by distance to the hall, fullest inside) are composed stems: 96 s loops on one shared clock, so the music box always sits on the choir's chord. The music box has three variants and plays a different one each time round. Until a stem has downloaded and decoded, its synthesized stand-in plays, then hands over.
-- **Gate** (chains, low strings, fire crackle) and **heights** (a thin, cold wind and high glassy notes above about 100 m) are synthesized, each in its zone from `data/zones.json`.
+- **Gate** (chains, low strings, fire crackle) and **heights** (sparse high glassy notes above about 100 m) are synthesized, each in its zone from `data/zones.json`.
 - **Events** are positioned and voice-limited: the wyrm's roar with its fire, and its wingbeats; a whoosh through walls; a ghost's sigh when it nods; the Warden's creak; the gargoyles' grind; bats chittering within 15 m; distant crows.
 
 ```
@@ -184,7 +190,7 @@ Medians of three cold runs on an M3 MacBook; the "was" figures are the previous 
 - `src/world/`: terrain, rock columns, sky, water, mist, trees, lights, and the texture library that streams in
 - `src/world/kit/`: the castle kit (towers, curtain walls, the great hall, the viaduct, the gate, the boathouse), assembled from `data/world.json` by `src/world/castle.ts`
 - `src/flight/`: the ghost, flight model, camera and autofly
-- `src/life/`: pumpkins, candles, wandering ghosts, bats, the wyrm, the Lantern Warden, the gargoyles' heads, the crows' caws, the lake's wisps and boat
+- `src/life/`: pumpkins, candles, wandering ghosts, bats, the wyrm, the Lantern Warden, the gargoyles' heads, crows, the animals, the hall's feast, the lake's wisps and boat; `rig.ts` poses the animals and guests
 - `src/audio/`: the mix, the synthesized layers and events, the zones, and the stem player (`stems.ts`, `layers/stem.ts`)
 - `src/render/`: the two-pass scene render, bloom and grade, the quality tiers, the look data's live hooks, and the once-drawn shadows
 - `src/ui/`: HUD, controls, touch input

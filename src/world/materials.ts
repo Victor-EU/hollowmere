@@ -31,6 +31,10 @@ export function makeMaterials(lib: TextureLibrary) {
     iron: new THREE.MeshStandardMaterial({ name: 'iron', color: new THREE.Color('#16171c'), roughness: 0.5, metalness: 0.7 }),
     wood: new THREE.MeshStandardMaterial({ name: 'wood', color: new THREE.Color('#2a1b12'), roughness: 0.8 }),
     dark: new THREE.MeshStandardMaterial({ name: 'dark', color: new THREE.Color('#33343a'), roughness: 0.9 }),
+    /** The hall's table linen and the carpet up its aisle; the high table's velvet; gilt. */
+    cloth: new THREE.MeshStandardMaterial({ name: 'cloth', color: new THREE.Color('#5e1622'), roughness: 0.95 }),
+    velvet: new THREE.MeshStandardMaterial({ name: 'velvet', color: new THREE.Color('#38184a'), roughness: 0.9 }),
+    gold: new THREE.MeshStandardMaterial({ name: 'gold', color: new THREE.Color('#c9a24a'), roughness: 0.38, metalness: 0.55 }),
   };
   onLook(() => {
     M.tower.emissiveIntensity = look.emissive.towerWindow;

@@ -5,6 +5,8 @@ import type { AudioEventType } from '../audio/types';
 export interface Living {
   object: THREE.Object3D;
   update(dt: number, time: number): void;
+  /** Called before each render of the scene with the camera drawing it (the view, the lake's reflection), to hide what that camera can't see. */
+  cull?(camera: THREE.Camera): void;
 }
 
 /** Things living systems may need from the rest of the app. */

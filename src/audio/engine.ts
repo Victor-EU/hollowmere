@@ -32,7 +32,7 @@ export class AudioEngine {
   private enabled = false;
   private paused = false;
   private wants: boolean;
-  private listener: ListenerState = { position: { x: 0, y: 0, z: 0 }, yaw: 0, speed: 0 };
+  private listener: ListenerState = { position: { x: 0, y: 0, z: 0 }, yaw: 0 };
   private suspendTimer = 0;
   private readonly decodeRate: number | undefined;
 

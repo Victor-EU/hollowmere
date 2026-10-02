@@ -70,6 +70,36 @@ export function hallWalls(h: HallSpec): HallWall[] {
   ];
 }
 
+/** Where the feast sits: shared by the furniture here and the feast (src/life/feast.ts). */
+export interface HallLayout {
+  /** The long tables: each one's centre line z, from x0 to x1. */
+  tables: { z: number; x0: number; x1: number }[];
+  /** World heights of the table tops and the bench seats; a bench's centre is `bench` from its table's. */
+  tableTop: number;
+  seat: number;
+  bench: number;
+  /** The aisle up the middle to the dais. */
+  aisle: { z: number; half: number };
+  dais: { x0: number; x1: number; top: number };
+  /** The high table, on the dais facing down the hall: its centre line x, ends, top, seat height, and the chairs (x, and each z). */
+  high: { x: number; z0: number; z1: number; top: number; seat: number; chairX: number; chairs: number[] };
+}
+
+export function hallLayout(h: HallSpec): HallLayout {
+  const cz = (h.z0 + h.z1) / 2;
+  const dais0 = h.x1 - T / 2 - 7;
+  const dTop = h.y0 + 0.6;
+  return {
+    tables: [-7.1, -3.1, 3.1, 7.1].map((dz) => ({ z: cz + dz, x0: h.x0 + 7, x1: dais0 - 3.4 })),
+    tableTop: h.y0 + 2.05,
+    seat: h.y0 + 1.5,
+    bench: 1.45,
+    aisle: { z: cz, half: 1.35 },
+    dais: { x0: dais0, x1: h.x1 - T / 2, top: dTop },
+    high: { x: dais0 + 2, z0: cz - 6.5, z1: cz + 6.5, top: dTop + 2.05, seat: dTop + 1.5, chairX: dais0 + 3.6, chairs: [-5.4, -3.4, -1.6, 0, 1.6, 3.4, 5.4].map((dz) => cz + dz) },
+  };
+}
+
 export function greatHall(k: Kit, h: HallSpec) {
   const { M, rand } = k;
   const L = h.x1 - h.x0;
@@ -233,23 +263,66 @@ export function greatHall(k: Kit, h: HallSpec) {
     k.add(new THREE.ConeGeometry(0.2, 4, 6), M.iron, matrix(cx, y + 29, cz));
   }
 
-  // Inside: flagstones, four long tables with benches, a dais with the high table.
+  // Inside: flagstones, a carpet up the aisle to the dais, four long tables dressed in linen with
+  // benches either side, and on the dais the high table in velvet, a throne and high-backed chairs.
+  // The feast itself (src/life/feast.ts) is laid on these, from the same layout.
   {
+    const lay = hallLayout(h);
     const floor = new THREE.PlaneGeometry(L - T, D - T);
     const uv = floor.getAttribute('uv');
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (L - T), uv.getY(i) * (D - T));
     k.add(floor, M.floor, matrix(cx, y0 + 0.05, cz, 0, -Math.PI / 2));
-    const top = new THREE.BoxGeometry(48, 0.35, 2.2);
-    const legs = new THREE.BoxGeometry(48, 1.8, 1.6);
-    const bench = new THREE.BoxGeometry(48, 0.25, 0.6);
-    for (const z of [h.z0 + 5, h.z0 + 9, h.z1 - 9, h.z1 - 5]) {
-      k.add(top, M.wood, matrix(cx - 2, y0 + 1.9, z));
-      k.add(legs, M.dark, matrix(cx - 2, y0 + 0.9, z));
-      for (const s of [-1, 1]) k.add(bench, M.wood, matrix(cx - 2, y0 + 1.0, z + s * 1.6));
+
+    const c0 = h.x0 + T / 2 + 0.4;
+    const c1 = lay.dais.x0 - 0.8;
+    const cw = lay.aisle.half * 2 - 0.6;
+    k.add(new THREE.BoxGeometry(c1 - c0, 0.06, cw), M.cloth, matrix((c0 + c1) / 2, y0 + 0.08, cz));
+    for (const s of [-1, 1]) k.add(new THREE.BoxGeometry(c1 - c0, 0.07, 0.14), M.gold, matrix((c0 + c1) / 2, y0 + 0.085, cz + s * (cw / 2 - 0.14)));
+
+    for (const t of lay.tables) {
+      const len = t.x1 - t.x0;
+      const mx = (t.x0 + t.x1) / 2;
+      const under = lay.tableTop - 0.3 - y0;
+      k.add(new THREE.BoxGeometry(len, 0.3, 2.0), M.wood, matrix(mx, lay.tableTop - 0.17, t.z));
+      k.add(new THREE.BoxGeometry(len - 1, under, 1.4), M.dark, matrix(mx, y0 + under / 2, t.z));
+      // Linen over the top, hanging down both long sides.
+      k.add(new THREE.BoxGeometry(len + 0.3, 0.04, 2.2), M.cloth, matrix(mx, lay.tableTop - 0.01, t.z));
+      const seatUnder = lay.seat - 0.22 - y0;
+      for (const s of [-1, 1]) {
+        k.add(new THREE.BoxGeometry(len + 0.3, 0.75, 0.04), M.cloth, matrix(mx, lay.tableTop - 0.39, t.z + s * 1.1));
+        k.add(new THREE.BoxGeometry(len, 0.22, 0.7), M.wood, matrix(mx, lay.seat - 0.11, t.z + s * lay.bench));
+        k.add(new THREE.BoxGeometry(len - 0.6, seatUnder, 0.4), M.dark, matrix(mx, y0 + seatUnder / 2, t.z + s * lay.bench));
+      }
     }
-    const dx = h.x1 - T / 2 - 3.5;
-    k.add(box(7, 0.6, D - T, rand() * 8, 0), M.floor, matrix(dx, y0 + 0.3, cz));
-    k.add(new THREE.BoxGeometry(2.4, 0.35, 14), M.wood, matrix(dx - 0.6, y0 + 0.6 + 1.9, cz));
-    k.add(new THREE.BoxGeometry(1.8, 1.8, 13), M.dark, matrix(dx - 0.6, y0 + 0.6 + 0.9, cz));
+
+    // The dais, a step up to it, and the high table facing down the hall.
+    const d = lay.dais;
+    k.add(box(d.x1 - d.x0, 0.6, D - T, rand() * 8, 0), M.floor, matrix((d.x0 + d.x1) / 2, y0 + 0.3, cz));
+    k.add(box(0.8, 0.3, D - T - 2, rand() * 8, 0), M.floor, matrix(d.x0 - 0.4, y0 + 0.15, cz));
+    const hi = lay.high;
+    const hl = hi.z1 - hi.z0;
+    const hUnder = hi.top - 0.3 - d.top;
+    k.add(new THREE.BoxGeometry(2.0, 0.3, hl), M.wood, matrix(hi.x, hi.top - 0.17, cz));
+    k.add(new THREE.BoxGeometry(1.4, hUnder, hl - 1), M.dark, matrix(hi.x, d.top + hUnder / 2, cz));
+    k.add(new THREE.BoxGeometry(2.2, 0.04, hl + 0.3), M.velvet, matrix(hi.x, hi.top - 0.01, cz));
+    k.add(new THREE.BoxGeometry(0.04, 0.9, hl + 0.3), M.velvet, matrix(hi.x - 1.1, hi.top - 0.46, cz));
+    k.add(new THREE.BoxGeometry(0.06, 0.1, hl + 0.3), M.gold, matrix(hi.x - 1.12, hi.top - 0.9, cz));
+    // High-backed chairs with gilt finials; the throne in the middle, taller still.
+    for (const z of hi.chairs) {
+      const throne = z === cz;
+      const back = throne ? 4.6 : 2.9;
+      const w = throne ? 1.6 : 1.05;
+      const bx = hi.chairX + 0.55;
+      const base = hi.seat - 0.2 - d.top;
+      k.add(new THREE.BoxGeometry(0.95, 0.2, w), M.wood, matrix(hi.chairX, hi.seat - 0.1, z));
+      k.add(new THREE.BoxGeometry(0.7, base, w - 0.2), M.dark, matrix(hi.chairX, d.top + base / 2, z));
+      k.add(new THREE.BoxGeometry(0.18, back, w), M.wood, matrix(bx, hi.seat + back / 2, z));
+      k.add(new THREE.BoxGeometry(0.06, back - 0.7, w - 0.3), throne ? M.velvet : M.cloth, matrix(bx - 0.12, hi.seat + back / 2, z));
+      for (const s of [-1, 1]) k.add(new THREE.ConeGeometry(0.12, 0.55, 6), M.gold, matrix(bx, hi.seat + back + 0.27, z + s * (w / 2 - 0.1)));
+      if (throne) {
+        k.add(new THREE.ConeGeometry(0.24, 1.1, 6), M.gold, matrix(bx, hi.seat + back + 0.55, z));
+        for (const s of [-1, 1]) k.add(new THREE.BoxGeometry(0.95, 0.14, 0.14), M.gold, matrix(hi.chairX, hi.seat + 0.55, z + s * (w / 2 - 0.07)));
+      }
+    }
   }
 }

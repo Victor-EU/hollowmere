@@ -4,9 +4,11 @@ import { AudioEngine, zoneLabelAt } from './audio';
 import { look, route as routeData, world, zones } from './data';
 import { Flight } from './flight/flight';
 import { Route } from './flight/route';
+import { makeAnimals } from './life/animals';
 import { makeBats } from './life/bats';
 import { makeCandles } from './life/candles';
 import { makeCrows } from './life/crows';
+import { makeFeast } from './life/feast';
 import { makeGargoyles } from './life/gargoyles';
 import { makeGhosts } from './life/ghosts';
 import { makeLake } from './life/lake';
@@ -96,17 +98,17 @@ async function boot() {
   const probe = { at: new THREE.Vector3(world.lake.center[0], 4, world.lake.center[1]), radius: Math.max(...world.lake.radii) * 1.2 };
   const water = makeWater(size.x, size.y, camera, fogColor, tex.ripples, sky.moonDir, probe);
   const mist = makeMist(world.life.mist, heights, tex.mist, sky.moonDir, reduceMotion);
-  scene.add(
+  /** Everything outside: inside the great hall it's hidden (see the culling below). */
+  const outdoors: THREE.Object3D[] = [
     sky.group,
     makeTerrain(world, heights),
     makeRockColumn(world.cliff, 'cliff'),
     makeRockColumn(world.outcrop, 'outcrop'),
-    castle.group,
     makeTrees(world, heights, M, tex, castle.viaduct.b),
-    lights.group,
     water.mesh,
     mist.mesh,
-  );
+  ];
+  scene.add(...outdoors, castle.group, lights.group);
 
   // Flight and sound.
   // Devices that start on the low tier also get the music decoded at half rate.
@@ -118,7 +120,12 @@ async function boot() {
   // Life.
   const ctx: LifeContext = { reduceMotion, player: flight.pos, playerVel: flight.vel, sound: (type, at) => audio.trigger(type, at) };
   // Everything here moves except the pumpkins and candles.
-  const still: Living[] = [makePumpkins(world, tex, castle.viaduct, ctx), makeCandles(world.life.candles, castle.hall, ctx)];
+  const pumpkins = makePumpkins(world, tex, castle.viaduct, ctx);
+  const wyrm = makeWyrm(world, tex, ctx);
+  const warden = makeWarden(world, heights, M, ctx, castle.colliders);
+  const gargoyles = makeGargoyles(castle.gargoyles, world.life.gargoyles.reach, M, ctx);
+  const lake = makeLake(world, M, castle.boatHome);
+  const still: Living[] = [pumpkins, makeCandles(world.life.candles, castle.hall, ctx)];
   const moving: Living[] = [
     makeGhosts(
       world.life.ghosts,
@@ -132,14 +139,29 @@ async function boot() {
       ctx,
     ),
     makeBats(world.life.bats, ctx),
-    makeWyrm(world, tex, ctx),
-    makeWarden(world, heights, M, ctx, castle.colliders),
-    makeGargoyles(castle.gargoyles, world.life.gargoyles.reach, M, ctx),
-    makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.every, ctx),
-    makeLake(world, M, castle.boatHome),
+    wyrm,
+    warden,
+    gargoyles,
+    lake,
   ];
   const living = [...still, ...moving];
   for (const l of living) scene.add(l.object);
+  // In the great hall the walls and the stained glass hide the whole outdoors, so it isn't drawn
+  // from in there: the land, the trees, the lake and its reflection, and what lives outside. Lights
+  // stay, since a change in their number would recompile every shader on the way in.
+  const H = castle.hall;
+  const indoors = (p: THREE.Vector3) => p.x > H.x0 + 1 && p.x < H.x1 - 1 && p.z > H.z0 + 1 && p.z < H.z1 - 1 && p.y > H.y0 && p.y < H.y0 + H.wallH;
+  const hideable = (o: THREE.Object3D): THREE.Object3D[] => {
+    let lit = false;
+    o.traverse((c) => (lit ||= (c as THREE.Light).isLight === true));
+    return lit ? o.children.flatMap((c) => ((c as THREE.Light).isLight ? [] : hideable(c))) : [o];
+  };
+  const outside = [...outdoors, ...[pumpkins, wyrm, warden, gargoyles, lake].map((l) => l.object)].flatMap(hideable);
+  scene.onBeforeRender = (_r, _s, cam) => {
+    const out = !indoors(cam.position);
+    for (const o of outside) o.visible = out;
+    for (const l of living) l.cull?.(cam);
+  };
   /** Left out of the lake's probe, which would freeze them. */
   const unreflected = [flight.ghost.group, flight.trail.points, ...moving.map((l) => l.object)];
   mark('world');
@@ -234,6 +256,23 @@ async function boot() {
   await Promise.all([lib.previews(PREVIEW_WAIT), compiled]);
   mark('previews');
 
+  /** Life that isn't in the opening shot, built and compiled after the first frame so it can't hold that up. */
+  const addLater = async () => {
+    for (const [make, out] of [
+      [() => makeAnimals(world.life.animals, heights, camera, ctx), true],
+      [() => makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.ground, world.life.crows.every, heights, ctx), true],
+      [() => makeFeast(castle.hall, M, tex, camera, ctx, quality.textures === 'desktop'), false],
+    ] as const) {
+      const l = make();
+      await renderer.compileAsync(l.object, camera, scene);
+      scene.add(l.object);
+      living.push(l);
+      unreflected.push(l.object);
+      if (out) outside.push(...hideable(l.object));
+    }
+    mark('later');
+  };
+
   // Loop. Paused while the tab is hidden, and at 30 fps once the window has been unfocused a minute.
   let last = performance.now();
   let first = true;
@@ -262,7 +301,7 @@ async function boot() {
     lights.update(t);
     for (const l of living) l.update(dt, t);
     lib.update(real);
-    audio.update({ position: flight.pos, yaw: flight.yaw, speed: flight.vel.length() }, dt);
+    audio.update({ position: flight.pos, yaw: flight.yaw }, dt);
     hud.update(flight, zoneLabelAt(zones, flight.pos));
     dev?.update(real);
     post.render(dt, t, flight.phase);
@@ -275,6 +314,7 @@ async function boot() {
       mark('first-frame');
       // Full-resolution textures, now that you can fly; the lake's probe sees them once they're in.
       void lib.stream(quality.textures).then(() => (probeStale = quality.settings.reflection === 'probe'));
+      void addLater();
     }
     if (probeStale) {
       probeStale = false;
