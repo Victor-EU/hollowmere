@@ -9,7 +9,8 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tools",
-    "shots": "node tools/shots.ts"
+    "shots": "node tools/shots.ts",
+    "validate": "node tools/validate.ts"
   },
   "dependencies": {
     "three": "0.186.1"

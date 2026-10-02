@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { RouteData } from '../data';
+import type { RouteData, Waypoint } from '../data';
 import { clamp, lerp, smoothstep } from '../world/math';
 
 /** The autofly loop: a closed centripetal Catmull-Rom curve through the waypoints, parameter t in [0, 1). */
@@ -13,12 +13,19 @@ export class Route {
     data: RouteData,
     private castleCentre: THREE.Vector3,
   ) {
-    this.curve = new THREE.CatmullRomCurve3(
-      data.waypoints.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
-      data.closed,
-      'centripetal',
-    );
-    this.speeds = data.waypoints.map((w) => w[3]);
+    this.curve = new THREE.CatmullRomCurve3([], data.closed, 'centripetal');
+    this.speeds = [];
+    this.setWaypoints(data.waypoints);
+  }
+
+  /** Replace the waypoints in place, so everything holding this route follows the edit. */
+  setWaypoints(waypoints: Waypoint[]) {
+    this.curve.points = waypoints.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    this.speeds = waypoints.map((w) => w[3]);
+  }
+
+  get count(): number {
+    return this.speeds.length;
   }
 
   /** Waypoint index → curve parameter. */

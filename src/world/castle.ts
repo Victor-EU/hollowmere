@@ -64,6 +64,7 @@ export function buildCastle(world: WorldData, heights: Heights, M: Materials, te
 
   // Everything is built into this scratch group as plain meshes, then merged at the end.
   const castle = new THREE.Group();
+  castle.name = 'castle';
   const instanced = new THREE.Group();
   instanced.name = 'castle-instanced';
   const colliders: Colliders = { cyl: [], box: [] };

@@ -12,8 +12,9 @@ import { makePumpkins } from './life/pumpkins';
 import { initSprites, setSpriteScale } from './life/sprites';
 import type { LifeContext, Living } from './life/types';
 import { makeWyrm } from './life/wyrm';
+import type { Dev } from './dev';
+import type { DevHost, DevTools } from './dev/types';
 import { makePost } from './render/post';
-import { validateScene } from './render/validate';
 import { makeHud } from './ui/hud';
 import { makeInput } from './ui/input';
 import { buildCastle } from './world/castle';
@@ -34,7 +35,7 @@ function noWebGL() {
   $('#loader').hidden = true;
 }
 
-function boot() {
+async function boot() {
   const canvas = $<HTMLCanvasElement>('#scene');
   const isTouch = matchMedia('(pointer: coarse)').matches;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -106,11 +107,6 @@ function boot() {
   ];
   for (const l of living) scene.add(l.object);
 
-  if (import.meta.env.DEV) {
-    const problems = validateScene(scene);
-    if (problems.length) console.error(`Non-finite geometry (fix before it reaches bloom):\n${problems.join('\n')}`);
-  }
-
   // UI.
   const toggleAuto = () => hud.setAuto(flight.toggleAuto());
   let soundBusy = false;
@@ -154,17 +150,45 @@ function boot() {
   onResize();
   flight.jump(flight.auto.t);
 
-  // Loop. Paused while the tab is hidden.
-  let last = performance.now();
+  // Adaptive resolution: frames and seconds since the last check, and how often it stepped down.
   let frames = 0;
   let acc = 0;
   let adapted = 0;
+
+  // Dev tools: everything in dev builds; just the stats overlay with ?stats in production.
+  const host: DevHost = {
+    canvas,
+    renderer,
+    scene,
+    camera,
+    flight,
+    route,
+    routeData,
+    world,
+    zones,
+    heights,
+    colliders: castle.colliders,
+    input,
+    hud,
+    quality: () => ({ dpr, adapted }),
+    zoneLabel: () => zoneLabelAt(zones, flight.pos),
+  };
+  let dev: DevTools | null = null;
+  if (import.meta.env.DEV) dev = (await import('./dev')).installDev(host);
+  else if (params.has('stats')) dev = (await import('./dev/stats')).statsOnly(host);
+
+  // Loop. Paused while the tab is hidden.
+  let last = performance.now();
   let first = true;
   let raf = 0;
   const frame = (now: number) => {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const real = Math.min(0.05, (now - last) / 1000);
     last = now;
-    flight.step(dt, input.read());
+    dev?.begin(now);
+    // Dev tools can pause the world or fly their own camera.
+    const dt = dev ? dev.worldDt(real) : real;
+    const raw = input.read();
+    flight.step(dt, dev ? dev.steer(raw, real) : raw);
     const t = flight.time;
     fog.density = world.fog.density * (1 + 3 * flight.boundary);
     water.update(t, fog.density);
@@ -174,15 +198,17 @@ function boot() {
     for (const l of living) l.update(dt, t);
     audio.update({ position: flight.pos, yaw: flight.yaw, speed: flight.vel.length() }, dt);
     hud.update(flight, zoneLabelAt(zones, flight.pos));
+    dev?.update(real);
     if (first) renderer.shadowMap.needsUpdate = true;
     post.render(dt, t, flight.phase);
+    dev?.end();
     if (first) {
       first = false;
       hud.ready();
     }
     // Lower the resolution once or twice if the GPU is struggling.
     frames++;
-    acc += dt;
+    acc += real;
     if (acc > 2.5) {
       const fps = frames / acc;
       frames = 0;
@@ -209,8 +235,8 @@ function boot() {
     frame(t);
   });
 
-  // A small hook for tinkering in the console and for screenshot tests.
-  Object.assign(window, { hollowmere: { flight, scene, renderer, post, jump: (t: number) => flight.jump(t) } });
+  // A small hook for tinkering in the console, screenshot tests and `npm run validate`.
+  Object.assign(window, { hollowmere: { flight, scene, renderer, post, dev: dev as Dev | null, jump: (t: number) => flight.jump(t) } });
 }
 
-boot();
+void boot();

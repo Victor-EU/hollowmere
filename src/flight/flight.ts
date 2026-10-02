@@ -42,9 +42,27 @@ const LOOK_HOLD = 3;
 const YAW_PER_PX = 0.0034;
 const PITCH_PER_PX = 0.003;
 const PITCH_LIMIT = 1.25;
-const CLEARANCE = 1.8;
+export const CLEARANCE = 1.8;
 
 const UP = new THREE.Vector3(0, 1, 0);
+
+/** Whether p is inside any wall or tower volume; 'hall' for the great hall's box. */
+export function insideColliders(colliders: Colliders, p: THREE.Vector3): boolean | 'hall' {
+  for (const c of colliders.cyl) {
+    if (p.y > c.y0 && p.y < c.y1 && (p.x - c.x) ** 2 + (p.z - c.z) ** 2 < c.r * c.r) return true;
+  }
+  for (const b of colliders.box) {
+    if (p.y < b.y0 || p.y > b.y1) continue;
+    const dx = p.x - b.cx;
+    const dz = p.z - b.cz;
+    const cs = Math.cos(b.rot);
+    const sn = Math.sin(b.rot);
+    const lx = dx * cs - dz * sn;
+    const lz = dx * sn + dz * cs;
+    if (Math.abs(lx) < b.hl && Math.abs(lz) < b.ht) return b.hall ? 'hall' : true;
+  }
+  return false;
+}
 
 export class Flight {
   readonly pos = new THREE.Vector3();
@@ -95,7 +113,9 @@ export class Flight {
     private onPhase: () => void,
   ) {
     this.ghost = makeGhost(0, 0.85);
+    this.ghost.group.name = 'player-ghost';
     this.ghost.group.scale.setScalar(1.6);
+    this.trail.points.name = 'ghost-trail';
     this.camera.rotation.order = 'YXZ';
     this.jump(0);
   }
@@ -113,12 +133,30 @@ export class Flight {
     this.route.point(t, this.pos);
     this.vel.set(0, 0, 0);
     this.phase = 0;
-    this.lastInside = this.insideAny(this.pos);
+    this.lastInside = insideColliders(this.colliders, this.pos);
     const d = this.route.point(t + 0.004).sub(this.pos).normalize();
     [this.yaw, this.pitch] = this.route.look(t, this.pos);
     this.gyaw = Math.atan2(d.x, d.z);
     this.dist = this.distBase;
     this.snapCamera();
+  }
+
+  /** Teleport anywhere, facing yaw and pitch. Autofly, if on, picks up from the nearest route point. */
+  place(p: THREE.Vector3, yaw: number, pitch: number) {
+    this.pos.copy(p);
+    this.vel.set(0, 0, 0);
+    this.phase = 0;
+    this.lastInside = insideColliders(this.colliders, this.pos);
+    this.yaw = yaw;
+    this.pitch = clamp(pitch, -PITCH_LIMIT, PITCH_LIMIT);
+    this.gyaw = yaw + Math.PI;
+    this.auto.t = this.route.nearest(p);
+    this.snapCamera();
+  }
+
+  /** Re-find the carrot after the route changed shape. */
+  resync() {
+    this.auto.t = this.route.nearest(this.pos);
   }
 
   toggleAuto(): boolean {
@@ -136,23 +174,6 @@ export class Flight {
   get returnsIn(): number | null {
     const A = this.auto;
     return A.enabled && A.override ? Math.max(0, Math.ceil(RETURN_AFTER - A.idle)) : null;
-  }
-
-  private insideAny(p: THREE.Vector3): boolean | 'hall' {
-    for (const c of this.colliders.cyl) {
-      if (p.y > c.y0 && p.y < c.y1 && (p.x - c.x) ** 2 + (p.z - c.z) ** 2 < c.r * c.r) return true;
-    }
-    for (const b of this.colliders.box) {
-      if (p.y < b.y0 || p.y > b.y1) continue;
-      const dx = p.x - b.cx;
-      const dz = p.z - b.cz;
-      const cs = Math.cos(b.rot);
-      const sn = Math.sin(b.rot);
-      const lx = dx * cs - dz * sn;
-      const lz = dx * sn + dz * cs;
-      if (Math.abs(lx) < b.hl && Math.abs(lz) < b.ht) return b.hall ? 'hall' : true;
-    }
-    return false;
   }
 
   private snapCamera() {
@@ -239,7 +260,7 @@ export class Flight {
     this.boundary = smoothstep(softRadius - 20, fogEnd, r);
 
     // Walls: phase on every crossing in or out of stone.
-    const ins = this.insideAny(pos);
+    const ins = insideColliders(this.colliders, pos);
     if (!!ins !== !!this.lastInside) {
       this.phase = 1;
       this.onPhase();

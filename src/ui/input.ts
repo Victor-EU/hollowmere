@@ -6,6 +6,19 @@ const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown
 export interface Input {
   /** Fresh movement state for this frame; look deltas accumulate until the flight consumes them. */
   read(): FlightInput;
+  /** Set by dev tools to take a pointer press or wheel turn before it becomes a look drag or zoom. */
+  hooks: InputHooks;
+}
+
+export interface InputHooks {
+  claimPointer?(e: PointerEvent): boolean;
+  claimWheel?(e: WheelEvent): boolean;
+}
+
+/** Keys typed into a form field belong to the field. */
+export function isTyping(e: KeyboardEvent): boolean {
+  const t = e.target as HTMLElement | null;
+  return !!t && (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT');
 }
 
 export interface InputHandlers {
@@ -22,8 +35,10 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
   const state: FlightInput = { forward: 0, strafe: 0, rise: 0, boost: false, lookDX: 0, lookDY: 0, zoom: 1 };
   const stick = { x: 0, y: 0 };
   let up = 0;
+  const hooks: InputHooks = {};
 
   addEventListener('keydown', (e) => {
+    if (isTyping(e)) return;
     const target = e.target as Element | null;
     if (target?.closest?.('button') && (e.code === 'Space' || e.code === 'Enter')) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -53,6 +68,7 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
   canvas.addEventListener('pointerdown', (e) => {
     canvas.focus({ preventScroll: true });
     on.gesture();
+    if (hooks.claimPointer?.(e)) return;
     if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.4 && stickId === null) {
       stickId = e.pointerId;
       const r = stickEl.getBoundingClientRect();
@@ -106,6 +122,7 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
     'wheel',
     (e) => {
       e.preventDefault();
+      if (hooks.claimWheel?.(e)) return;
       state.zoom = clamp(state.zoom * Math.exp(e.deltaY * 0.0012), 0.4, 2.4);
     },
     { passive: false },
@@ -153,6 +170,7 @@ export function makeInput(canvas: HTMLCanvasElement, isTouch: boolean, on: Input
 
   const k = (code: string) => (keys.has(code) ? 1 : 0);
   return {
+    hooks,
     read() {
       state.forward = (k('KeyW') || k('ArrowUp')) - (k('KeyS') || k('ArrowDown')) + stick.y;
       state.strafe = (k('KeyD') || k('ArrowRight')) - (k('KeyA') || k('ArrowLeft')) + stick.x;

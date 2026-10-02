@@ -6,7 +6,8 @@
 // same server) at the same points, writing <point>-port.png and <point>-mockup.png side by side.
 
 import { mkdirSync } from 'node:fs';
-import { chromium, type Page } from 'playwright-core';
+import type { Page } from 'playwright-core';
+import { launchChrome } from './chrome.ts';
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const mockupArg = process.argv.find((a) => a.startsWith('--mockup'));
@@ -14,7 +15,6 @@ const withMockup = !!mockupArg;
 const base = args[0] ?? 'http://localhost:5173';
 const mockupUrl = mockupArg?.split('=')[1] ?? `${base}/docs/mockup/hollowmere-mockup.html`;
 const out = args[1] ?? 'shots';
-const chrome = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 /** Route parameter t for six fixed points (waypoint index / 24). */
 const POINTS: [string, number][] = [
@@ -46,10 +46,7 @@ async function shoot(page: Page, url: string, label: string) {
 }
 
 mkdirSync(out, { recursive: true });
-const browser = await chromium.launch({
-  executablePath: chrome,
-  args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'],
-});
+const browser = await launchChrome();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
 await shoot(await context.newPage(), `${base}/`, 'port');
 if (withMockup) await shoot(await context.newPage(), mockupUrl, 'mockup');

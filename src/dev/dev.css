@@ -1,0 +1,44 @@
+/* Dev tools: a quiet column top right, monospace numbers, the same glass as the HUD. */
+.dev-dock{position:fixed;z-index:4;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:min(330px,calc(100vw - 24px));
+  max-height:calc(100vh - 96px);display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  font:12px/1.45 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--parchment)}
+.dev-panel{background:var(--glass-strong);border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.dev-panel b{font-weight:600}
+.dev-stats{pointer-events:none;font-variant-numeric:tabular-nums}
+.dev-stats canvas{display:block;width:100%;height:44px;margin-bottom:4px}
+.dev-stats .over{color:#ff8a7a;font-weight:600}
+.dev-stats .dev-mode{color:var(--lamp)}
+.dev-stats .keys{color:var(--dim);font-size:11px}
+
+.dev-route{pointer-events:auto;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:auto;user-select:text;-webkit-user-select:text}
+.dev-route header{display:flex;flex-direction:column;gap:1px}
+.dev-route header span{color:var(--dim)}
+.dev-route button{font:500 12px/1 var(--ui);padding:6px 9px;backdrop-filter:none;-webkit-backdrop-filter:none}
+.dev-route input{font:12px ui-monospace,"SF Mono",Menlo,monospace;color:var(--parchment);background:rgba(0,0,0,.35);
+  border:1px solid var(--line);border-radius:5px;padding:3px 5px;width:100%;box-sizing:border-box}
+.dev-route input[type=checkbox]{width:auto;accent-color:var(--lamp)}
+.dev-route input:focus-visible{outline:2px solid var(--lamp);outline-offset:0}
+.dev-route label{display:flex;align-items:center;gap:5px;color:var(--dim);white-space:nowrap}
+.dev-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dev-row > b{flex:1}
+.dev-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dev-route-list{max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums}
+.dev-route-list > div{display:grid;grid-template-columns:2.2em 1fr 9.5em 3em 1em;gap:4px;padding:2px 6px;cursor:pointer}
+.dev-route-list > div:hover{background:rgba(255,255,255,.06)}
+.dev-route-list > div.sel{background:rgba(242,166,90,.22)}
+.dev-route-list span:nth-child(1),.dev-route-list span:nth-child(3){color:var(--dim)}
+.dev-route-list span:nth-child(5){color:#ff8a7a}
+.dev-issues{margin:0;padding:0 0 0 1.1em;color:#ffb3a8}
+.dev-issues .ok{color:#9fcfb2;list-style:none;margin-left:-1.1em}
+.dev-status{margin:0;color:var(--lamp);min-height:1.45em}
+.dev-hint{margin:0;color:var(--dim);font-size:11px}
+
+.dev-labels{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.dev-label{position:absolute;left:0;top:0;font:11px/1 ui-monospace,"SF Mono",Menlo,monospace;color:var(--parchment);
+  text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap}
+.dev-label.named{color:var(--lamp)}
+.dev-label.selected{color:#fff;font-weight:700}
+
+.dev-badge{position:fixed;z-index:4;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;
+  font:600 12px/1 ui-monospace,"SF Mono",Menlo,monospace;color:#ffd2ca;border-color:rgba(255,120,100,.6);background:rgba(60,14,10,.82)}
