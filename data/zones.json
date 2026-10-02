@@ -1,0 +1,17 @@
+{
+  "$comment": "Audio and naming zones. Gain is 'gain' inside the shape and fades to 0 over 'falloff' metres outside it. 'layer' names an audio layer (or null for a name-only zone). 'label' is what the HUD says on entering.",
+  "zones": [
+    { "id": "hall", "label": "The Hollow Hall", "layer": "choir", "gain": 1.0, "falloff": 110,
+      "shape": { "type": "box", "min": [-38, 40, 33], "max": [28, 80, 55] } },
+    { "id": "gate", "label": "The Warden's Gate", "layer": "gate", "gain": 0.9, "falloff": 55,
+      "shape": { "type": "sphere", "center": [170, 34, 76], "radius": 30 } },
+    { "id": "stair", "label": "The Candle Stair", "layer": null, "gain": 1.0, "falloff": 0,
+      "shape": { "type": "box", "min": [164, -5, 92], "max": [180, 34, 140] } },
+    { "id": "keep", "label": "Wyrmspire", "layer": null, "gain": 1.0, "falloff": 0,
+      "shape": { "type": "sphere", "center": [6, 140, -20], "radius": 55 } },
+    { "id": "heights", "label": null, "layer": "heights", "gain": 0.85, "falloff": 40,
+      "shape": { "type": "altitude", "min": 100 } },
+    { "id": "mere", "label": "The Mere", "layer": null, "gain": 1.0, "falloff": 0,
+      "shape": { "type": "sphere", "center": [-230, 10, 200], "radius": 190 } }
+  ]
+}

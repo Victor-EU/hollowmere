@@ -1,0 +1,107 @@
+{
+  "$comment": "Metres, y up, lake surface at y = 0. North is -z. Perimeter angles are degrees with x = r cos(a), z = r sin(a). Values come from the mockup (docs/mockup/hollowmere-mockup.html); see docs/design.md section 5.",
+  "plateau": 40,
+  "terrain": { "size": 3000, "segments": 300 },
+  "cliff": { "center": [0, 0], "topRadius": 82, "bottomRadius": 106, "top": 40, "bottom": -26, "seed": 3.3 },
+  "outcrop": { "center": [172, 66], "topRadius": 30, "bottomRadius": 41, "top": 30, "bottom": -22, "seed": 8.1 },
+  "lake": { "center": [-190, 170], "radii": [300, 240], "bed": -12 },
+  "mountains": { "inner": 360, "outer": 760, "peak": 300 },
+  "hall": { "x": [-38, 28], "z": [33, 55], "floor": 40, "wallHeight": 24, "ridge": 16, "bays": 9 },
+  "towerBase": 36,
+  "towers": [
+    { "name": "keep", "at": [6, -20], "r": 9, "h": 84, "spire": 42, "pinnacles": true },
+    { "name": "west-great", "at": [-56, 8], "r": 6.5, "h": 74, "spire": 32, "pinnacles": true },
+    { "name": "west-lesser", "at": [-44, -16], "r": 5, "h": 60, "spire": 26, "pinnacles": true },
+    { "name": "north-1", "at": [-8, -33], "r": 3.6, "h": 62, "spire": 20 },
+    { "name": "north-2", "at": [20, -34], "r": 3.6, "h": 64, "spire": 20 },
+    { "name": "keep-west", "at": [-6, -6], "r": 3.2, "h": 56, "spire": 17 },
+    { "name": "keep-east", "at": [19, -7], "r": 3.2, "h": 54, "spire": 17 },
+    { "name": "north-west", "at": [-24, -44], "r": 4.2, "h": 46, "spire": 20 },
+    { "name": "north-east", "at": [38, -36], "r": 4.6, "h": 50, "spire": 21 },
+    { "name": "east", "at": [44, -4], "r": 4, "h": 42, "spire": 18 },
+    { "name": "court-west", "at": [-28, -2], "r": 3.6, "h": 40, "spire": 16 },
+    { "name": "court-south-west", "at": [-20, 16], "r": 3, "h": 34, "spire": 14 },
+    { "name": "court-south-east", "at": [31, 12], "r": 3.4, "h": 38, "spire": 15 },
+    { "name": "hall-nw", "at": [-38, 33], "r": 2.8, "h": 32, "spire": 13 },
+    { "name": "hall-sw", "at": [-38, 55], "r": 2.8, "h": 32, "spire": 13 },
+    { "name": "hall-ne", "at": [28, 33], "r": 2.8, "h": 32, "spire": 13 },
+    { "name": "hall-se", "at": [28, 55], "r": 2.8, "h": 32, "spire": 13 }
+  ],
+  "perimeter": {
+    "radius": 70,
+    "base": 18,
+    "towers": [
+      { "angle": 160, "r": 4.2, "h": 46, "spire": 15 },
+      { "angle": 185, "r": 4.6, "h": 50, "spire": 17 },
+      { "angle": 212, "r": 3.8, "h": 42, "spire": 13 },
+      { "angle": 238, "r": 4.4, "h": 48, "spire": 16 },
+      { "angle": 262, "r": 4.8, "h": 52, "spire": 18 },
+      { "angle": 288, "r": 3.9, "h": 44, "spire": 14 },
+      { "angle": 314, "r": 4.5, "h": 49, "spire": 16 },
+      { "angle": 340, "r": 4.0, "h": 41, "spire": 12 },
+      { "angle": 4, "r": 4.7, "h": 47, "spire": 17 },
+      { "angle": 30, "r": 4.1, "h": 45, "spire": 15 }
+    ]
+  },
+  "walls": {
+    "perimeter": { "base": 22, "top": 54, "thickness": 3.6, "skip": [[4, 30]] },
+    "extra": [
+      { "from": { "perimeter": 160 }, "to": [-38, 33], "base": 34, "top": 54, "thickness": 3.6 },
+      { "from": { "perimeter": 30 }, "to": [28, 33], "base": 34, "top": 54, "thickness": 3.6 },
+      { "from": [-6, -6], "to": [19, -7], "base": 36, "top": 50, "thickness": 3 }
+    ]
+  },
+  "viaduct": { "from": [70, 40.4, 18], "to": [150, 31.2, 57], "spans": 8 },
+  "gate": { "at": [172, 30, 86], "stairs": 46 },
+  "boathouse": { "from": [-190, 130], "toward": [-150, -120] },
+  "cobwebs": [
+    { "at": [164.3, 41, 87.8], "size": 7, "yaw": 0, "roll": 0.3 },
+    { "at": [29.2, 58, 57.6], "size": 9, "yaw": 0.2, "roll": 0.6 },
+    { "at": [-49, 96, 10], "size": 12, "yaw": -0.6, "roll": 0.2 }
+  ],
+  "lights": {
+    "hemisphere": { "sky": "#4b5c85", "ground": "#1c140e", "intensity": 1.73 },
+    "moon": { "color": "#a9bde2", "intensity": 3.6, "shadowExtent": 230, "shadowMap": 2048 },
+    "warm": [
+      { "name": "gate", "at": [172, 48, 76], "intensity": 67, "distance": 95, "flicker": 0.1 },
+      { "name": "viaduct", "at": [105, 52, 40], "intensity": 45, "distance": 60 },
+      { "name": "hall-east", "at": [46, 60, 44], "intensity": 51, "distance": 60 },
+      { "name": "hall", "at": [-5, 54, 44], "intensity": 41.5, "distance": 52, "color": "#ffb066", "flicker": 0.08 }
+    ]
+  },
+  "fog": { "color": "#2a3349", "density": 0.00125 },
+  "moon": { "direction": [0.777, 0.4, -0.629], "distance": 3600, "size": 360 },
+  "castleCentre": [5, 70, 5],
+  "bounds": { "softRadius": 620, "fogEnd": 720, "ceiling": 340 },
+  "life": {
+    "pumpkins": {
+      "clouds": [
+        { "min": [150, 37, 52], "max": [194, 62, 96], "count": 30, "scale": [1.1, 2.0] },
+        { "min": [32, 46, 26], "max": [60, 72, 64], "count": 12, "scale": [1.1, 1.8] },
+        { "min": [-32, 52, 37], "max": [22, 60, 51], "count": 6, "scale": [0.9, 1.3] }
+      ],
+      "giant": { "at": [172, 52, 83], "scale": 4.2 },
+      "viaduct": { "count": 12, "rise": [5, 16], "spread": 4, "scale": [1, 1.7] }
+    },
+    "candles": 150,
+    "bats": [
+      { "center": [-50, 112, 4], "count": 40 },
+      { "center": [6, 150, -20], "count": 30 },
+      { "center": [160, 70, 70], "count": 20 }
+    ],
+    "ghosts": [
+      { "home": "gate", "count": 4, "radius": [6, 13], "rise": [2, 9], "speed": [0.15, 0.3], "scale": [1.6, 2.1], "eitherWay": true },
+      { "home": "hall", "count": 2, "radius": [10, 20], "rise": [0, 6], "speed": [0.08, 0.14], "scale": [2.2, 2.2] },
+      { "home": [110, 36, 38], "count": 1, "radius": [30, 30], "rise": [2, 2], "speed": [0.06, 0.06], "scale": [1.9, 1.9] },
+      { "home": "pier", "count": 1, "radius": [18, 18], "rise": [1, 1], "speed": [-0.1, -0.1], "scale": [1.8, 1.8] }
+    ],
+    "wisps": { "count": 12, "min": [-260, 2, 80], "max": [-60, 6, 260], "radius": [8, 30], "speed": [0.05, 0.15] },
+    "wyrm": { "center": [6, 146, -20], "radius": 56, "segments": 46 },
+    "mist": [
+      { "ring": [118, 200], "y": [4, 20], "count": 24, "size": [70, 140], "opacity": [0.3, 0.5] },
+      { "min": [-420, 3, 60], "max": [-40, 10, 360], "count": 14, "size": [90, 170], "opacity": [0.2, 0.38] },
+      { "ring": [20, 70], "y": [64, 92], "count": 10, "size": [36, 70], "opacity": [0.12, 0.24], "tint": 1.2 },
+      { "min": [100, 8, 20], "max": [220, 26, 140], "count": 8, "size": [60, 120], "opacity": [0.25, 0.42] }
+    ]
+  }
+}
