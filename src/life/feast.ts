@@ -5,7 +5,7 @@ import { StaticBatch } from '../world/batch';
 import { hallLayout, type HallSpec } from '../world/kit/hall';
 import type { Materials } from '../world/materials';
 import { clamp, dampK, lerp, range, rng } from '../world/math';
-import type { Textures } from '../world/textures';
+import { makeHallBanners } from '../world/textures';
 import * as G from './guests';
 import { chain, Creatures, ellipsoid, J, limb, Rig, rigMaterial } from './rig';
 import { Pool } from './sprites';
@@ -187,7 +187,7 @@ interface Guest {
   role: 'guest' | 'host' | 'stirrer';
 }
 
-export function makeFeast(hall: HallSpec, M: Materials, tex: Textures, camera: THREE.Camera, ctx: LifeContext, dense: boolean): Living {
+export function makeFeast(hall: HallSpec, M: Materials, camera: THREE.Camera, ctx: LifeContext, dense: boolean): Living {
   const rand = rng(3131);
   const rr = (a: number, b: number) => range(rand, a, b);
   const lay = hallLayout(hall);
@@ -311,7 +311,7 @@ export function makeFeast(hall: HallSpec, M: Materials, tex: Textures, camera: T
       bannerG.push(b.translate(x, y0 + 11.45, wall + into * 0.1));
     }
   }
-  const banners = new THREE.Mesh(mergeGeometries(bannerG), new THREE.MeshLambertMaterial({ name: 'banner', map: tex.hallBanners, alphaTest: 0.5, side: THREE.DoubleSide }));
+  const banners = new THREE.Mesh(mergeGeometries(bannerG), new THREE.MeshLambertMaterial({ name: 'banner', map: makeHallBanners(), alphaTest: 0.5, side: THREE.DoubleSide }));
   banners.name = 'feast-banners';
   banners.receiveShadow = true;
   group.add(banners);

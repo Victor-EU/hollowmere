@@ -150,8 +150,11 @@ function makeCrest() {
   );
 }
 
-/** Five hall banners side by side (128 x 320 each): the castle's crest, then a bat, a jack-o'-lantern, a spider and a moon. */
-function makeHallBanners() {
+/**
+ * Five hall banners side by side (128 x 320 each): the castle's crest, then a bat, a jack-o'-lantern,
+ * a spider and a moon. Made by the feast (src/life/feast.ts) after the first frame, not with the rest.
+ */
+export function makeHallBanners() {
   const gold = '#d8a944';
   const fields = ['#4a0d12', '#2c1440', '#141016', '#0f2a26', '#101a3a'];
   return canvasTex(
@@ -539,7 +542,6 @@ export function makeTextures(maxAnisotropy: number) {
     cloud: softTex(160, 4, 23, 2),
     moon: makeMoon(),
     crest: makeCrest(),
-    hallBanners: makeHallBanners(),
     web: makeWeb(),
     pumpkin: pumpkinTex(false),
     pumpkinGlow: pumpkinTex(true),

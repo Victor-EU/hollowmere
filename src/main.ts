@@ -261,7 +261,7 @@ async function boot() {
     for (const [make, out] of [
       [() => makeAnimals(world.life.animals, heights, camera, ctx), true],
       [() => makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.ground, world.life.crows.every, heights, ctx), true],
-      [() => makeFeast(castle.hall, M, tex, camera, ctx, quality.textures === 'desktop'), false],
+      [() => makeFeast(castle.hall, M, camera, ctx, quality.textures === 'desktop'), false],
     ] as const) {
       const l = make();
       await renderer.compileAsync(l.object, camera, scene);
