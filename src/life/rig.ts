@@ -136,9 +136,21 @@ interface Part {
 /** Collects parts, then merges them into one geometry with the rig's attributes. */
 export class Rig {
   private parts: Part[] = [];
+  private moving: THREE.Matrix4 | null = null;
 
   add(g: THREE.BufferGeometry | THREE.BufferGeometry[], joint: number, pivot: V3, paint: Paint, glow = 0): this {
-    for (const one of Array.isArray(g) ? g : [g]) this.parts.push({ g: one, joint, pivot, paint, glow });
+    const m = this.moving;
+    const at = m ? (new THREE.Vector3(...pivot).applyMatrix4(m).toArray() as V3) : pivot;
+    for (const one of Array.isArray(g) ? g : [g]) this.parts.push({ g: m ? one.applyMatrix4(m) : one, joint, pivot: at, paint, glow });
+    return this;
+  }
+
+  /** Parts added while `build` runs go in moved by `m`, pivots and all: a body built upright, then leant. Nests. */
+  moved(m: THREE.Matrix4, build: () => void): this {
+    const was = this.moving;
+    this.moving = was ? was.clone().multiply(m) : m;
+    build();
+    this.moving = was;
     return this;
   }
 

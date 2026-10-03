@@ -61,7 +61,7 @@ Two generated paintings so far, and the board is open to more. Neither is shippe
 - Taken: the idea that the route itself glows (lanterns and pumpkins line the way, so the eye and autofly follow the same path), waterfalls off the cliff into the lake, a few village lights across the water for scale, a larger moon, foreground cats and crows, lantern-bearing statues at the gate, cobwebs catching light.
 - Left: the overall orange cast (our night stays blue, with warmth only where there's a flame), the sheer density. B has every Halloween motif at once; we take its route idea and its cast, not its clutter.
 
-**Open to add:** a graveyard on the eastern slope, a witch's silhouette crossing the moon once a session, a crypt under the keep. Anything new goes on the board with the same two lists.
+**Open to add:** a graveyard on the eastern slope, a crypt under the keep. (The witch across the moon was added after launch; see §10.) Anything new goes on the board with the same two lists.
 
 ## 4. The experience
 
@@ -313,9 +313,13 @@ Added at launch, to make the hall grand. Based on the medieval great-hall feast 
 - **Sound.** The hall's choir; nothing new.
 - **Cost.** About 30 draws and 240k triangles (fewer guests on the low tier), drawn only while the camera is in the hall. While it is, nothing outdoors is drawn, since the walls and glass hide it.
 
-### Witch silhouette (event, not a creature you can reach)
-- **Look.** A flat black silhouette on a broom, far away.
-- **Behavior.** Crosses the moon once every 5–8 minutes, 4 s, then gone. Pure sky event (see §19). Generic enough to be safe; it carries no named props.
+### The witch on her broom
+Added after launch, on request: a witch flying round the sky, based on the broom-riding witch of folklore and old Halloween cards. It grew out of the planned silhouette event (painting B's witch across the moon), which it still does.
+- **Look.** Astride a twig broom, leaning into the wind: a robe with a purple sash, striped stockings, pointed boots, the hall witches' green face and tall hat, a cape and hair streaming behind. A black cat rides on the bristles and a small jack-o'-lantern swings from the handle (a warm point that carries in the dark); sparks stream off the twigs, gold cooling to green. Three times life size, like the castle's other folk. Generic folklore; no named props.
+- **Behavior.** Roams the sky 90–260 m round you at 80–150 m up, banking through her turns, out of the castle's airspace (the spires and the wyrm's circle). Every 100–200 s, when the moon is on screen and in plain sight, now and from where you'll be over the next 9 s, she crosses it: staged out of frame on a level line square to the view 150–300 m out, she swoops in, slows over the moon so its disc frames her silhouette for about 3 s, and leaves. If she's in the shot when one is due, she flies out of it first. On autofly the moon is clear on the way back over the lake, so that's where she crosses.
+- **Reacts.** Within 60 m she turns her head to watch you and waves; the cat looks too, its eyes and the lantern brightening. She keeps about 40 m off.
+- **Sound.** None (a synthesized cackle would go the way of the wind).
+- **Cost.** Three draws (her, the sparks, the lantern's glow) and about 10k triangles; not drawn past 900 m.
 
 ### The Lantern Warden (gate guardian)
 - **Look.** A 5 m hooded figure woven from tree roots and iron bands, standing beside the left gate pillar. Where a head would be, an iron lantern with amber glass. The roots trail into the ground so it reads as grown there, not placed.

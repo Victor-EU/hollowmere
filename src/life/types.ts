@@ -15,6 +15,8 @@ export interface LifeContext {
   /** The player ghost's position and velocity, read every frame. */
   player: THREE.Vector3;
   playerVel: THREE.Vector3;
+  /** Where the ghost will be in `s` seconds: along the route on autofly, straight on otherwise. */
+  ahead(s: number, out: THREE.Vector3): THREE.Vector3;
   /** Play a positioned one-shot (dragon roar, a ghost's sigh). */
   sound(type: AudioEventType, at: THREE.Vector3): void;
 }

@@ -171,6 +171,15 @@ export class Flight {
     return A.enabled;
   }
 
+  /** Where the ghost will be in `s` seconds: along the route on autofly, straight on otherwise. */
+  ahead(s: number, out: THREE.Vector3): THREE.Vector3 {
+    const A = this.auto;
+    if (!A.enabled || A.override) return out.copy(this.pos).addScaledVector(this.vel, s);
+    let t = A.t;
+    for (let k = 0; k < 8; k++) t += (this.route.speed(t) * s) / 8 / this.route.rate(t);
+    return this.route.point(t, out);
+  }
+
   /** Seconds until autofly takes back over, or null when it isn't waiting. */
   get returnsIn(): number | null {
     const A = this.auto;

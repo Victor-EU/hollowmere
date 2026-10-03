@@ -100,7 +100,8 @@ export function skeleton(): THREE.BufferGeometry {
   return r.build();
 }
 
-function witchHead(r: Rig, dy: number) {
+/** A witch's head, hair and hat, `dy` above a seated guest's (the one on the broom in the sky wears it too). */
+export function witchHead(r: Rig, dy: number) {
   const face = '#98a986';
   const hair = '#2b2a2f';
   const hat = '#151119';

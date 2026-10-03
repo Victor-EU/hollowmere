@@ -151,6 +151,16 @@
         { "at": [-13.6, 44.0, 55.75], "yaw": 0 }
       ]
     },
+    "witch": {
+      "$comment": "Out of the castle's airspace: the keep's spire tops out at 162 m and the wyrm circles it at 146 m, 56 m out.",
+      "scale": 3,
+      "speed": 17,
+      "height": [80, 150],
+      "ring": [90, 260],
+      "within": 520,
+      "keepOut": { "center": [5, -5], "radius": 125, "below": 215 },
+      "moon": { "every": [100, 200], "distance": [150, 300] }
+    },
     "mist": [
       { "ring": [112, 200], "y": [2, 9], "count": 28, "size": [70, 140], "aspect": 0.3, "opacity": [0.3, 0.5] },
       { "min": [-420, 2, 60], "max": [-40, 8, 360], "count": 16, "size": [90, 170], "aspect": 0.25, "opacity": [0.2, 0.38] },

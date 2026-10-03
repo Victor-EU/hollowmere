@@ -16,6 +16,7 @@ import { makePumpkins } from './life/pumpkins';
 import { initSprites, setSpriteScale } from './life/sprites';
 import type { LifeContext, Living } from './life/types';
 import { makeWarden } from './life/warden';
+import { makeWitch } from './life/witch';
 import { makeWyrm } from './life/wyrm';
 import type { Dev } from './dev';
 import type { DevHost, DevTools } from './dev/types';
@@ -118,7 +119,7 @@ async function boot() {
   scene.add(flight.ghost.group, flight.trail.points);
 
   // Life.
-  const ctx: LifeContext = { reduceMotion, player: flight.pos, playerVel: flight.vel, sound: (type, at) => audio.trigger(type, at) };
+  const ctx: LifeContext = { reduceMotion, player: flight.pos, playerVel: flight.vel, ahead: (s, out) => flight.ahead(s, out), sound: (type, at) => audio.trigger(type, at) };
   // Everything here moves except the pumpkins and candles.
   const pumpkins = makePumpkins(world, tex, castle.viaduct, ctx);
   const wyrm = makeWyrm(world, tex, ctx);
@@ -261,6 +262,7 @@ async function boot() {
     for (const [make, out] of [
       [() => makeAnimals(world.life.animals, heights, camera, ctx), true],
       [() => makeCrows([...world.life.crows.perches.map((p) => new THREE.Vector3(...p)), ...castle.boathouseRidge], world.life.crows.ground, world.life.crows.every, heights, ctx), true],
+      [() => makeWitch(world.life.witch, heights, castle.colliders, sky.moonDir.clone().multiplyScalar(world.moon.distance), camera, ctx), true],
       [() => makeFeast(castle.hall, M, camera, ctx, quality.textures === 'desktop'), false],
     ] as const) {
       const l = make();

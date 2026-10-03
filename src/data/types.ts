@@ -141,6 +141,7 @@ export interface WorldData {
      */
     crows: { perches: Vec3[]; ground: { center: Vec2; radius: number; count: number }[]; every: Range };
     animals: AnimalsData;
+    witch: WitchData;
     mist: MistBank[];
   };
 }
@@ -156,6 +157,24 @@ export interface AnimalsData {
   hares: { center: Vec2; radius: number; count: number }[];
   /** Black cats: where each sits, and which way it faces. */
   cats: { at: Vec3; yaw: number }[];
+}
+
+/**
+ * The witch on her broom (design doc §10). She roams the sky `ring` metres round you at `height`
+ * (ground permitting), staying within `within` of the castle and out of its airspace, where the
+ * spires and the wyrm are: inside `keepOut.radius` of its centre, below `keepOut.below`. Every
+ * `moon.every` seconds, when you're facing the moon, she crosses it `moon.distance` metres out.
+ */
+export interface WitchData {
+  /** Shown this many times human size, like the rest of the castle's folk. */
+  scale: number;
+  /** Cruising speed, metres a second. */
+  speed: number;
+  height: Range;
+  ring: Range;
+  within: number;
+  keepOut: { center: Vec2; radius: number; below: number };
+  moon: { every: Range; distance: Range };
 }
 
 /** data/look.json: how the world looks. Colours are sRGB hex; tuned live with the dev look panel. */
